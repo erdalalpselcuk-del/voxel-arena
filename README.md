@@ -1,3 +1,13 @@
+---
+title: Voxel Arena
+emoji: 🎯
+colorFrom: yellow
+colorTo: blue
+sdk: docker
+app_port: 3000
+pinned: false
+---
+
 # Voxel Arena
 
 Blok dünyasında çok oyunculu FPS (Three.js + Node.js WebSocket). Poxel.io'nun modlarından ve Half-Life'ın silah/sağlık/zırh düzeninden esinlenildi.
