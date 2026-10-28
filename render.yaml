@@ -1,0 +1,14 @@
+# Render.com: "New > Blueprint" ile bu depoyu bağla. Kalıcı disk ücretli plan ister (starter).
+services:
+  - type: web
+    name: voxel-arena
+    runtime: docker
+    plan: starter            # ücretsiz plan 15 dk işlem yoksa uyur ve diski yoktur: sürekli açık için starter
+    healthCheckPath: /healthz
+    disk:
+      name: voxel-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: DATA_DIR
+        value: /data

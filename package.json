@@ -1,0 +1,9 @@
+{
+  "name": "voxel-arena",
+  "version": "1.0.0",
+  "description": "Blok dünyasında çok oyunculu FPS (Kill Confirmed)",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "license": "MIT",
+  "dependencies": { "ws": "^8.18.0" }
+}

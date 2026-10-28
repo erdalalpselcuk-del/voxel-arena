@@ -1,0 +1,20 @@
+# /etc/systemd/system/voxel-arena.service
+[Unit]
+Description=Voxel Arena sunucusu
+After=network.target
+
+[Service]
+User=voxel
+WorkingDirectory=/opt/voxel-arena
+Environment=PORT=3000 HOST=127.0.0.1 DATA_DIR=/var/lib/voxel-arena NODE_ENV=production
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=2
+KillSignal=SIGTERM
+# ayrıcalıkları kıs
+NoNewPrivileges=true
+ProtectSystem=full
+ReadWritePaths=/var/lib/voxel-arena
+
+[Install]
+WantedBy=multi-user.target

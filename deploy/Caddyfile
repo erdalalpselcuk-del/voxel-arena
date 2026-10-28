@@ -1,0 +1,4 @@
+# /etc/caddy/Caddyfile : otomatik HTTPS (Let's Encrypt) + WebSocket desteği hazır gelir
+oyun.alanadin.com {
+	reverse_proxy 127.0.0.1:3000
+}
