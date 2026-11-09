@@ -397,13 +397,15 @@ function closeChat(sendIt) {
 $('chatin').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); closeChat(true); } else if (e.key === 'Escape') closeChat(false); e.stopPropagation(); });
 
 // ---------- ağ ----------
-let ROOM = null, rejected = false;
+let ROOM = null, rejected = false, rtt = 0, pingT = null, gotRtt = false;
+const cid = (() => { try { let v = sessionStorage.getItem('va_cid'); if (!v) { v = Math.random().toString(36).slice(2) + Date.now().toString(36); sessionStorage.setItem('va_cid', v); } return v; } catch (e) { return Math.random().toString(36).slice(2); } })();
 function send(o) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); }
 function connect(info) {
+  if (ws) { ws.onclose = null; try { ws.close(); } catch (e) {} ws = null; }
   leaving = false; rejected = false; UPL = Object.assign({}, info.up || {});
   ws = info.server ? new WebSocket(info.server) : LOCAL ? new window.FakeWS() : new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
-  ws.onopen = () => send(Object.assign({ t: 'join' }, info));
-  ws.onclose = () => { if (rejected) return; if (!leaving && !connected && VA.hooks.status) VA.hooks.status('Sunucuya bağlanılamadı.'); if (!leaving && connected) { connected = false; showMsg('Bağlantı koptu.<small>Esc ile ana menüye dön</small>', 0); } };
+  ws.onopen = () => { send(Object.assign({ t: 'join' }, info, { cid })); clearInterval(pingT); gotRtt = false; if (!LOCAL || info.server) { const pg = () => send({ t: 'ping', ts: performance.now(), rtt: gotRtt ? Math.round(rtt) : undefined }); pg(); pingT = setInterval(pg, 2000); } };
+  ws.onclose = () => { clearInterval(pingT); if (rejected) return; if (!leaving && !connected && VA.hooks.status) VA.hooks.status('Sunucuya bağlanılamadı.'); if (!leaving && connected) { connected = false; showMsg('Bağlantı koptu.<small>Esc ile ana menüye dön</small>', 0); } };
   ws.onerror = () => { if (VA.hooks.status) VA.hooks.status('Sunucuya bağlanılamadı.'); };
   ws.onmessage = (e) => onMsg(JSON.parse(e.data));
 }
@@ -529,6 +531,7 @@ function onMsg(m) {
       break;
     case 'join': players.set(m.player.id, m.player); if (m.player.id !== myId) { ensureAvatar(m.player); feed(`<b>${esc(m.player.name)}</b> katıldı`); } break;
     case 'leave': { const p = players.get(m.id); if (p) feed(`<b>${esc(p.name)}</b> ayrıldı`); players.delete(m.id); removeAvatar(m.id); lastShot.delete(m.id); break; }
+    case 'pong': { const r = performance.now() - m.ts; rtt = gotRtt ? rtt * 0.6 + r * 0.4 : r; gotRtt = true; break; }
     case 'snap': onSnap(m); break;
     case 'shot': onShot(m); break;
     case 'fire': lastShot.set(m.id, performance.now()); if (m.id !== myId) { const a = avatars.get(m.id); const d = a ? a.group.position.distanceTo(camera.position) : 99; sfx.shot(m.w, Math.max(0, 1 - d / 55) * 0.8); } break;
@@ -924,7 +927,7 @@ function leave() {
   hideResults(); roundOver = false;
   leaving = true; connected = false; chatOpen = false; mouseDown = false;
   $('chatwrap').classList.remove('open');
-  if (ws) { ws.onclose = null; try { ws.close(); } catch (e) {} ws = null; }
+  clearInterval(pingT); if (ws) { ws.onclose = null; try { ws.close(); } catch (e) {} ws = null; }
   if (document.exitPointerLock) document.exitPointerLock();
   document.body.classList.remove('playing', 'paused'); paused = false; locked = false;
   clearAvatars(); clearTags(); clearProjs(); clearEffects();

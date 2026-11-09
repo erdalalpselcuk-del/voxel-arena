@@ -396,11 +396,18 @@
   };
 
   // ---------- ateş ----------
-  G.hitboxes = function (exclude) {
+  // gecikme telafisi: vuranın ekranda gördüğü (geçmişteki) konumlara göre isabet bak
+  function posAt(v, at) {
+    const H = v.hist; if (!at || !H || !H.length) return v.pos;
+    if (at >= H[H.length - 1][0]) return v.pos;
+    for (let i = H.length - 1; i > 0; i--) if (H[i - 1][0] <= at) { const a = H[i - 1], b = H[i], k = (at - a[0]) / Math.max(1, b[0] - a[0]); return [a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k, a[3] + (b[3] - a[3]) * k]; }
+    return [H[0][1], H[0][2], H[0][3]];
+  }
+  G.hitboxes = function (exclude, at) {
     const out = [];
     for (const v of this.players.values()) if (v !== exclude && v.alive) {
-      const h = v.crouch ? 1.2 : 1.8;
-      out.push({ ent: v, min: [v.pos[0] - 0.3, v.pos[1], v.pos[2] - 0.3], max: [v.pos[0] + 0.3, v.pos[1] + h, v.pos[2] + 0.3], h });
+      const h = v.crouch ? 1.2 : 1.8, q = posAt(v, at);
+      out.push({ ent: v, min: [q[0] - 0.3, q[1], q[2] - 0.3], max: [q[0] + 0.3, q[1] + h, q[2] + 0.3], h });
     }
     for (const k of this.chickens) if (k.alive) out.push({ ent: k, chicken: true, min: [k.pos[0] - 0.35, k.pos[1], k.pos[2] - 0.35], max: [k.pos[0] + 0.35, k.pos[1] + 0.8, k.pos[2] + 0.35], h: 0.8 });
     return out;
@@ -413,7 +420,7 @@
     const now = Date.now();
     if (now < p.nextFire - 40) return;
     p.nextFire = now + W.rate;
-    const hb = this.hitboxes(p);
+    const hb = this.hitboxes(p, p.human && p.rtt != null ? now - Math.min(350, p.rtt / 2 + 110) : 0);
     const eyeY = p.pos[1] + (p.crouch ? 1.15 : 1.6);
     if (Math.hypot(o[0] - p.pos[0], o[1] - eyeY, o[2] - p.pos[2]) > 3) return;
 
@@ -517,6 +524,7 @@
         this.collect(p);
         break;
       }
+      case 'ping': p.rtt = clamp(msg.rtt, 0, 400, 0); this.send(id, { t: 'pong', ts: msg.ts }); break;
       case 'shoot':
         if (Array.isArray(msg.o) && Array.isArray(msg.ds)) this.fire(p, msg.w | 0, [clamp(msg.o[0], -100, 200, 0), clamp(msg.o[1], -10, 100, 0), clamp(msg.o[2], -100, 200, 0)], msg.ds.filter((d) => Array.isArray(d)));
         break;
@@ -713,6 +721,7 @@
     for (const tag of [...this.tags.values()]) if (now - tag.born > TAG_LIFE) { this.tags.delete(tag.id); this.broadcast({ t: 'tagGone', id: tag.id, kind: 'expire' }); }
     this.pk.forEach((k, i) => { if (!k.on && !k.disabled && now >= k.at) { k.on = true; this.broadcast({ t: 'pk', i, on: 1 }); } });
     for (const p of [...this.players.values()]) if (!p.human) { if (p.z) this.zombieStep(p, dt); else this.botStep(p, dt); }
+    for (const v of this.players.values()) { const H = v.hist || (v.hist = []); H.push([now, v.pos[0], v.pos[1], v.pos[2]]); while (H.length > 24) H.shift(); }
     this.flagStep();
     this.zomStep(now);
     this.stepProjectiles(dt);
