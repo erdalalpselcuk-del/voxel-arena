@@ -257,6 +257,17 @@
         add(0.008, (l.top - l.bot) * 0.8 + 0.02, len, C.accent, s * (l.at(s) + 0.002), y + 0.012, zc); add(0.008, 0.05, len * 0.7, C.accent, s * (l.at(s) + 0.009), y + 0.04, zc + len * 0.1); } },
       shroud() { if (melee) return; const z = z0 + 0.08, l = loc(P, z, 0.06); add(l.w * 2 + 0.016, (l.top - l.bot) + 0.016, 0.12, C.main, 0, (l.top + l.bot) / 2, z); },
       crown() { const z = z0 + 0.02, l = loc(P, z, 0.006), dx = Math.min(0.018, Math.max(0, l.w - 0.005)); for (const x of dx ? [-dx, 0, dx] : [0]) { const h = x === 0 ? 0.045 : 0.03; add(0.01, h, 0.012, C.accent, x, l.top + h / 2 - 0.002, z); } },
+      // alev: üç katmanlı (kırmızı-turuncu-sarı) dil dil parlayan bloklar; oyunda titreyerek yanar (flicker)
+      flames(n) {
+        n = Math.max(3, Math.min(9, n || Math.round(L / 0.1)));
+        const lc = (c, k) => { const r = (c >> 16) & 255, g = (c >> 8) & 255, b = c & 255; return (Math.round(r + (255 - r) * k) << 16) | (Math.round(g + (255 - g) * k) << 8) | Math.round(b + (255 - b) * k); };
+        const tip = lc(C.glow, 0.65);
+        for (let i = 0; i < n; i++) {
+          const z = z0 + L * (0.08 + 0.84 * i / Math.max(1, n - 1)), l = loc(P, z, 0.022), base = l.top, h = 0.055 + 0.026 * ((i * 5) % 3), w = Math.min(0.044, Math.max(0.018, l.w * 2.2));
+          const mk = (sx, sy, sz, col, y0, y1) => out.push([sx, y1 - y0, sz, col, 0, base - 0.002 + (y0 + y1) / 2, z, null, 0, 1, 2]);
+          mk(w, 0, 0.046, C.accent, 0, h * 0.5); mk(w * 0.68, 0, 0.032, C.glow, h * 0.5, h * 0.88); mk(w * 0.36, 0, 0.018, tip, h * 0.88, h * 1.3);
+        }
+      },
       frags() { [-0.25, 0, 0.2, -0.05, 0.3].forEach((f, i) => { const z = zm + L * f, l = loc(P, z, 0.013), s = i % 2 ? 1 : -1, sz = 0.02 + 0.01 * (i % 3), k = [0.8, 0.3, 0.6, 0.15, 0.5][i];
         add(sz, 0.022, 0.026, i % 2 ? C.glow : C.accent, s * (l.at(s) + sz / 2 - 0.003), l.bot + (l.top - l.bot) * k, z, i % 2); }); },
     };
@@ -275,7 +286,7 @@
   const partsFor = (wi, ci) => (ci > 0 && CL[ci] && CL[ci].ops ? DEFS[wi].parts.concat(decor(wi, ci)) : DEFS[wi].parts);
 
   function makeGun(wi, tint, ci) {
-    const d = DEFS[wi], g = new T.Group(), ud = { groups: {} };
+    const d = DEFS[wi], g = new T.Group(), ud = { groups: {}, fl: [] };
     ci = ci | 0; if (ci > 0 && CL[ci] && CL[ci].main != null) tint = CL[ci].main;
     const grp = (name) => {
       if (!ud.groups[name]) { const o = new T.Group(), piv = d.groups[name]; o.position.set(piv[0], piv[1], piv[2]); g.add(o); ud.groups[name] = { obj: o, piv }; }
@@ -286,6 +297,7 @@
       const m = new T.Mesh(geo, p[9] ? basic(col) : mat(col)); m.scale.set(p[0], p[1], p[2]);
       if (p[7]) { const G = grp(p[7]); m.position.set(p[4] - G.piv[0], p[5] - G.piv[1], p[6] - G.piv[2]); G.obj.add(m); }
       else { m.position.set(p[4], p[5], p[6]); g.add(m); }
+      if (p[10] === 2) ud.fl.push({ m, y0: m.position.y, h0: m.scale.y, w0: m.scale.x, ph: p[6] * 37 + p[1] * 211 });
     }
     const r = RARITY[wi] | 0;
     if (r > 0 && d.parts.length) {
@@ -319,5 +331,10 @@
     return out;
   }
 
-  root.VWeapons = { DEFS, RARITY, RARITY_INFO, makeGun, pose, partsFor, partColor, isMelee: (wi) => !!MELEE_SET[wi], hasFlash: (wi) => !FLASH_FREE[wi] };
+  // alevli koleksiyonlar: alev dillerini titret (her karede çağrılır; alev yoksa hemen döner)
+  function flicker(g, t) {
+    const L = g && g.userData && g.userData.fl; if (!L || !L.length) return;
+    for (const f of L) { const k = 0.8 + 0.26 * Math.sin(t * 13 + f.ph) + 0.12 * Math.sin(t * 29 + f.ph * 1.7); f.m.scale.y = f.h0 * k; f.m.position.y = f.y0 + f.h0 * (k - 1) / 2; f.m.scale.x = f.w0 * (0.92 + 0.14 * Math.sin(t * 17 + f.ph * 2)); }
+  }
+  root.VWeapons = { flicker, DEFS, RARITY, RARITY_INFO, makeGun, pose, partsFor, partColor, isMelee: (wi) => !!MELEE_SET[wi], hasFlash: (wi) => !FLASH_FREE[wi] };
 })(typeof self !== 'undefined' ? self : this);

@@ -21,6 +21,11 @@
     { name: 'Kral', head: 0xf1c27d, eye: 0x111111, pattern: 'royal' },
     { name: 'Gökkuşağı', head: 0xf1c27d, eye: 0x111111, pattern: 'rainbow' },
     { name: 'Galaksi', head: 0x2b1b4d, eye: 0xffffff, pattern: 'galaxy' },
+    { name: 'Forma Sarı #9', head: 0xd9a066, eye: 0x111111, pattern: 'jersey', jc: [0xffd23f, 0x14213d], jn: 'GENÇBAY' },
+    { name: 'Forma Lacivert #9', head: 0xd9a066, eye: 0x111111, pattern: 'jersey', jc: [0x14213d, 0xffd23f], jn: 'GENÇBAY' },
+    { name: 'Forma Kırmızı #9', head: 0xd9a066, eye: 0x111111, pattern: 'jersey', jc: [0xd32f2f, 0xffffff], jn: 'GENÇBAY' },
+    { name: 'Yapımcı Kral', head: 0xf1c27d, eye: 0x111111, pattern: 'maker' },
+    { name: 'Ateş Ruhu', head: 0x2a0d08, eye: 0xff8a00, pattern: 'flame' },
   ];
   const HATS = ['Şapkasız', 'Kep', 'Taç', 'Miğfer', 'Anten', 'Boynuz', 'Kovboy', 'Silindir', 'Halka', 'Korsan', 'Cadı', 'Aşçı', 'Noel', 'Mohawk', 'Baret', 'Şövalye Miğferi', 'Alev', 'Kral Tacı', 'Ördek', 'Kulaklık', 'Siber Vizör', 'Mantar', 'Elmas Taç'];
   const BACKS = ['Yok', 'Sırt Çantası', 'Pelerin', 'Kanatlar', 'Jetpack', 'Kılıç', 'Ok Kılıfı', 'Kalkan', 'Şeytan Kanatları', 'Dalgıç Tüpü', 'Gitar', 'Gökkuşağı Pelerin', 'Roket Çantası', 'Altın Kanatlar'];
@@ -37,7 +42,7 @@
   const spec = (list, prices) => list.map((o, i) => Object.assign({ id: i }, o, prices[i] || px(0)));
   const CATALOG = {
     color: COLORS.map((c, i) => Object.assign({ id: i, name: COLOR_NAMES[i], hex: c }, i < 6 ? px(0) : px(100 + (i - 6) * 30))),
-    skin: spec(SKINS.map((x) => ({ name: x.name })), [px(0), px(400), px(600), px(500), gem(25), gem(60), px(700), px(650), gem(40), px(800), px(750), px(600), pass(3), pass(2), px(900), pass(3), pass(3), pass(3)]),
+    skin: spec(SKINS.map((x) => ({ name: x.name })), [px(0), px(400), px(600), px(500), gem(25), gem(60), px(700), px(650), gem(40), px(800), px(750), px(600), pass(3), pass(2), px(900), pass(3), pass(3), pass(3), gem(40), gem(40), px(1500), gem(150), gem(90)]),
     hat: spec(HATS.map((n) => ({ name: n })), [px(0), px(150), gem(20), px(250), px(100), px(300), px(350), px(400), gem(15), px(300), px(350), px(200), px(250), px(300), px(200), px(500), pass(3), pass(3), px(400), px(350), pass(2), px(450), pass(3)]),
     back: spec(BACKS.map((n) => ({ name: n })), [px(0), px(200), px(350), gem(30), px(500), px(250), px(300), px(350), pass(2), px(400), px(450), pass(3), pass(2), pass(3)]),
     gskin: GSKINS.map((x, i) => Object.assign({ id: i, name: x.name, hex: x.color }, [px(0), px(300), px(300), px(400), gem(40), px(300), px(300), px(300), px(350), px(350), pass(2), px(400), gem(35), px(400), px(400), pass(3), pass(3)][i])),

@@ -152,6 +152,9 @@
     R(8, 21, 4, 6, '#2c3e50'); R(12, 21, 4, 6, '#2c3e50'); R(8, 26, 4, 1, '#1b2733'); R(12, 26, 4, 1, '#1b2733');
     R(7, 13, 10, 8, shirt); R(5, 13, 2, 7, shirt); R(17, 13, 2, 7, shirt); R(5, 19, 2, 2, head); R(17, 19, 2, 2, head);
     R(7, 20, 10, 1, 'rgba(0,0,0,.25)');
+    if (sk.pattern === 'jersey') { const m = icoHex(sk.jc[0]), t = icoHex(sk.jc[1]); R(7, 13, 10, 8, m); R(7, 13, 10, 1, t); R(7, 13, 1, 8, t); R(16, 13, 1, 8, t); R(8, 21, 4, 3, m); R(12, 21, 4, 3, m); R(8, 23, 4, 1, t); R(12, 23, 4, 1, t); R(10, 15, 4, 1, t); R(10, 16, 1, 1, t); R(13, 16, 1, 1, t); R(10, 17, 4, 1, t); R(13, 18, 1, 1, t); R(10, 19, 4, 1, t); }
+    if (sk.pattern === 'maker') { R(7, 13, 10, 8, '#7a0f2a'); R(11, 13, 2, 8, '#ffd23f'); R(7, 13, 10, 2, '#f4f4f4'); R(7, 20, 10, 1, '#ffd23f'); }
+    if (sk.pattern === 'flame') { R(7, 13, 10, 8, '#2a0d08'); R(9, 14, 1, 5, '#ff6a00'); R(12, 15, 1, 5, '#ff6a00'); R(15, 14, 1, 3, '#ff6a00'); }
     R(8, 5, 8, 8, head);
     // kafa desenleri
     if (sk.pattern === 'camo') { R(9, 5, 2, 2, '#4b6b2f'); R(13, 6, 2, 2, '#6b4f2a'); R(8, 10, 2, 2, '#4b6b2f'); R(8, 14, 3, 3, '#4b6b2f'); R(13, 16, 3, 2, '#6b4f2a'); R(10, 18, 2, 2, '#34501f'); }
@@ -171,6 +174,8 @@
     if (sk.pattern === 'royal') { R(7, 13, 10, 2, '#d32f2f'); R(7, 15, 10, 1, '#fff'); }
     if (sk.pattern === 'rainbow') ['#ff1744', '#ff9100', '#ffea00', '#00e676', '#2979ff'].forEach((c, i) => R(7, 13 + i * 2, 10, 2, c));
     if (sk.pattern === 'galaxy') { R(9, 14, 1, 1, '#fff'); R(14, 16, 1, 1, '#fff'); R(11, 18, 1, 1, '#b388ff'); R(15, 19, 1, 1, '#fff'); R(13, 6, 1, 1, '#b388ff'); }
+    if (sk.pattern === 'maker') { R(8, 3, 8, 2, '#ffd23f'); R(8, 1, 1, 2, '#ffd23f'); R(11, 0, 2, 3, '#ffd23f'); R(15, 1, 1, 2, '#ffd23f'); R(11, 3, 2, 1, '#e53935'); }
+    if (sk.pattern === 'flame') { R(9, 2, 2, 3, '#ff3b00'); R(13, 2, 2, 3, '#ff3b00'); R(11, 0, 2, 5, '#ffa500'); R(11, 0, 2, 2, '#fff0a0'); }
     // yüz
     const eye = icoHex(sk.eye); R(10, 8, 1, 2, eye); R(13, 8, 1, 2, eye); R(11, 11, 2, 1, 'rgba(0,0,0,.35)');
     // şapka
@@ -674,6 +679,7 @@
 
   let roomReq = null;
   function play() {
+    if (window.VTouch) VTouch.enterFull();
     if (!D().name.trim()) { D().name = 'Oyuncu' + (100 + Math.floor(Math.random() * 900)); $('name').value = D().name; }
     PR.save();
     const info = PR.joinInfo();

@@ -154,7 +154,7 @@
       if (bot) this.removePlayer(bot.id);
     }
     if (this.players.size >= MAX_PLAYERS) return null;
-    const p = { id: this.nextId++, name: String(info.name || 'Oyuncu').replace(/[<>&"'`]/g, '').trim().slice(0, 16) || 'Oyuncu', color: clamp(info.color | 0, 0, 11, 0), hat: clamp(info.hat | 0, 0, 22, 0), skin: clamp(info.skin | 0, 0, 17, 0), back: clamp(info.back | 0, 0, 13, 0), pref: this.cleanLoadout(info.loadout), team: this.modeKey === 'zom' ? (human ? 0 : 1) : this.pickTeam(info.team), up: this.cleanUp(info.up), cl: clamp(info.coll | 0, 0, COLL_N - 1, 0),
+    const p = { id: this.nextId++, name: String(info.name || 'Oyuncu').replace(/[<>&"'`]/g, '').trim().slice(0, 16) || 'Oyuncu', color: clamp(info.color | 0, 0, 11, 0), hat: clamp(info.hat | 0, 0, 22, 0), skin: clamp(info.skin | 0, 0, 40, 0), back: clamp(info.back | 0, 0, 13, 0), pref: this.cleanLoadout(info.loadout), team: this.modeKey === 'zom' ? (human ? 0 : 1) : this.pickTeam(info.team), up: this.cleanUp(info.up), cl: clamp(info.coll | 0, 0, COLL_N - 1, 0),
       pos: [0, 0, 0], yaw: 0, pitch: 0, hp: 100, armor: 0, alive: true, w: 2, owned: [0, 1, 2], gren: 2, score: 0, kills: 0, deaths: 0, nextFire: 0, nextNade: 0, lastT: 0, crouch: false, human, joined: true,
       vy: 0, strafe: 1, strafeT: 0, goal: null, goalT: 0, seen: 0, stuck: 0, lastPos: null };
     p.pos = this.spawnFor(p);

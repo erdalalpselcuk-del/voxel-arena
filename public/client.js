@@ -171,6 +171,14 @@ function addBack(body, kind) {
   else if (kind === 12) { body.add(box(0.46, 0.6, 0.22, 0x4a4f55, 0, 1.05, 0.26), box(0.2, 0.2, 0.3, 0x7a7d82, -0.1, 1.15, 0.3), box(0.2, 0.2, 0.3, 0x7a7d82, 0.1, 1.15, 0.3), box(0.2, 0.06, 0.1, 0xd32f2f, -0.1, 1.28, 0.44), box(0.2, 0.06, 0.1, 0xd32f2f, 0.1, 1.28, 0.44)); }
   else if (kind === 13) for (const s_ of [-1, 1]) { const w = new THREE.Mesh(blockGeo, basicMat(0xffd23f)); w.scale.set(0.55, 0.8, 0.04); w.position.set(s_ * 0.45, 1.28, 0.2); w.rotation.z = s_ * 0.5; const w2 = new THREE.Mesh(blockGeo, basicMat(0xfff3b0)); w2.scale.set(0.4, 0.5, 0.05); w2.position.set(s_ * 0.5, 1.3, 0.21); w2.rotation.z = s_ * 0.5; body.add(w, w2); }
 }
+const jerseyTex = {};
+function jerseyName(txt, col) {
+  const k = txt + col; if (jerseyTex[k]) return jerseyTex[k];
+  const cv = document.createElement('canvas'); cv.width = 256; cv.height = 48; const g = cv.getContext('2d');
+  g.font = '800 36px Rajdhani, Arial, sans-serif'; g.textAlign = 'center'; g.fillStyle = '#' + col.toString(16).padStart(6, '0'); g.fillText(txt, 128, 37);
+  return (jerseyTex[k] = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv), transparent: true }));
+}
+function flickAvatar(a, t) { if (!a.fl) return; for (const f of a.fl) { const k = 0.8 + 0.26 * Math.sin(t * 13 + f.ph) + 0.12 * Math.sin(t * 29 + f.ph * 1.7); f.m.scale.y = f.h0 * k; f.m.position.y = f.y0 + f.h0 * (k - 1) / 2; } }
 function makeAvatar(p) {
   const group = new THREE.Group(), body = new THREE.Group(); group.add(body);
   const sk = SKINS[p.sk | 0] || SKINS[0], gold = sk.pattern === 'gold';
@@ -189,6 +197,7 @@ function makeAvatar(p) {
   if (sk.pattern === 'panel') body.add(box(0.3, 0.22, 0.02, 0x35e0ff, 0, 1.12, -0.16), box(0.12, 0.08, 0.02, 0x222222, 0, 0.9, -0.16));
   if (sk.pattern === 'rip') body.add(box(0.22, 0.2, 0.02, sk.head, 0.1, 1.2, -0.16));
   if (sk.pattern === 'band') body.add(box(0.57, 0.1, 0.32, 0xd32f2f, 0, 0.62, 0));
+  const flames = [];
   const bx = (sx, sy, sz, c, x, y, z, par) => (par || body).add(box(sx, sy, sz, c, x, y, z));
   switch (sk.pattern) {
     case 'fang': head.add(box(0.04, 0.07, 0.02, 0xffffff, -0.07, -0.12, -0.205), box(0.04, 0.07, 0.02, 0xffffff, 0.07, -0.12, -0.205)); bx(0.57, 0.1, 0.32, 0x5a0f1a, 0, 0.62, 0); break;
@@ -203,12 +212,38 @@ function makeAvatar(p) {
     case 'royal': bx(0.57, 0.1, 0.32, 0xd32f2f, 0, 1.38, 0); bx(0.57, 0.06, 0.33, 0xffffff, 0, 1.3, 0); break;
     case 'rainbow': [0xff1744, 0xff9100, 0xffea00, 0x00e676, 0x2979ff].forEach((c, i) => { const m = new THREE.Mesh(blockGeo, basicMat(c)); m.scale.set(0.57, 0.16, 0.32); m.position.set(0, 1.35 - i * 0.16, 0); body.add(m); }); break;
     case 'galaxy': for (const [x, y] of [[-0.15, 1.3], [0.1, 1.15], [-0.05, 0.95], [0.18, 0.85], [-0.2, 0.8]]) { const m = new THREE.Mesh(blockGeo, basicMat(0xffffff)); m.scale.set(0.05, 0.05, 0.02); m.position.set(x, y, -0.16); body.add(m); } head.add(box(0.05, 0.05, 0.02, 0xb388ff, 0.12, 0.12, -0.205)); break;
+    case 'jersey': {
+      const [jm, jt] = sk.jc, D9 = ['111', '101', '111', '001', '111'], cell = 0.075;
+      bx(0.6, 0.84, 0.34, jm, 0, 1.0, 0); bx(0.6, 0.05, 0.345, jt, 0, 1.4, 0); for (const s of [-1, 1]) bx(0.03, 0.84, 0.345, jt, s * 0.3, 1.0, 0);
+      for (const lg of [l1, l2]) lg.add(box(0.27, 0.3, 0.29, jm, 0, -0.12, 0), box(0.275, 0.04, 0.295, jt, 0, -0.25, 0));
+      const digit = (z, mir, k, y0) => D9.forEach((row, r) => [...row].forEach((v, ci) => { if (v === '1') body.add(box(cell * k, cell * k, 0.02, jt, (mir ? -1 : 1) * (ci - 1) * cell * k, y0 + (2 - r) * cell * k, z)); }));
+      digit(0.185, false, 1.25, 1.0); digit(-0.185, true, 0.5, 1.22);
+      if (sk.jn) { const nm = new THREE.Mesh(blockGeo, jerseyName(sk.jn, jt)); nm.scale.set(0.5, 0.09, 0.012); nm.position.set(0, 1.3, 0.182); body.add(nm); }
+      head.add(box(0.43, 0.06, 0.43, jt, 0, 0.13, 0));
+      break;
+    }
+    case 'maker': {
+      bx(0.6, 0.84, 0.34, 0x7a0f2a, 0, 1.0, 0); bx(0.07, 0.84, 0.345, 0xffd23f, 0, 1.0, 0); bx(0.62, 0.1, 0.36, 0xf4f4f4, 0, 1.35, 0); bx(0.62, 0.05, 0.36, 0xffd23f, 0, 0.62, 0);
+      for (const x of [-0.2, 0, 0.2]) bx(0.05, 0.05, 0.365, 0x111111, x, 1.35, 0);
+      bx(0.58, 0.95, 0.04, 0x9b1236, 0, 0.95, 0.2); bx(0.58, 0.05, 0.045, 0xffd23f, 0, 0.5, 0.2);
+      head.add(box(0.45, 0.09, 0.45, 0xffd23f, 0, 0.24, 0)); for (const [x, z, h] of [[-0.17, -0.17, 0.12], [0.17, -0.17, 0.12], [-0.17, 0.17, 0.12], [0.17, 0.17, 0.12], [0, -0.17, 0.17], [0, 0.17, 0.17]]) head.add(box(0.07, h, 0.07, 0xffd23f, x, 0.285 + h / 2 - 0.02, z));
+      head.add(box(0.07, 0.07, 0.02, 0xe53935, 0, 0.25, -0.23));
+      break;
+    }
+    case 'flame': {
+      bx(0.58, 0.82, 0.32, 0x2a0d08, 0, 1.0, 0);
+      for (const [x, y, h] of [[-0.16, 1.15, 0.4], [0.05, 1.0, 0.5], [0.2, 1.2, 0.3], [-0.05, 0.85, 0.25]]) { const m = new THREE.Mesh(blockGeo, basicMat(0xff6a00)); m.scale.set(0.045, h, 0.02); m.position.set(x, y, -0.165); body.add(m); }
+      [[-0.13, 0.28, 0.12], [0, 0.31, 0.2], [0.13, 0.28, 0.14], [-0.06, 0.34, 0.1], [0.07, 0.34, 0.12]].forEach(([x, y, h], i) => {
+        for (const [k, col, w] of [[0, 0xff3b00, 0.1], [0.55, 0xffa500, 0.07], [0.95, 0xfff0a0, 0.04]]) { const m = new THREE.Mesh(blockGeo, basicMat(col)); m.scale.set(w, h * (k ? 0.6 : 1), w); m.position.set(x, y + h * k * 0.55, 0); head.add(m); flames.push({ m, y0: m.position.y, h0: m.scale.y, ph: i * 1.7 + k * 3 }); }
+      });
+      break;
+    }
   }
   addBack(body, p.bk | 0);
   if (p.z) { body.scale.setScalar(p.z === 2 ? 1.35 : 1); }
   const label = makeLabel(p.name || '', p.z ? '#9be36a' : teamOn ? ((p.tm | 0) === myTeam() ? '#7fc0ff' : '#ff8a7e') : null); group.add(label);
   scene.add(group);
-  const a = { group, body, head, l1, l2, gun, gunIdx: -1, target: new THREE.Vector3(...(p.p || [0, 0, 0])), yaw: p.yaw || 0, label, walk: 0, moved: 0, last: new THREE.Vector3(...(p.p || [0, 0, 0])) };
+  const a = { group, body, head, l1, l2, gun, fl: flames.length ? flames : null, gunIdx: -1, target: new THREE.Vector3(...(p.p || [0, 0, 0])), yaw: p.yaw || 0, label, walk: 0, moved: 0, last: new THREE.Vector3(...(p.p || [0, 0, 0])) };
   group.position.copy(a.target);
   return a;
 }
@@ -308,6 +343,10 @@ const RELOAD_SFX = {
 // ---------- durum ----------
 let ws = null, myId = 0, connected = false, roundOver = false, WIN = 15, LABEL = 'Künye', MODE = 'kc', locked = false, paused = false, mouseDown = false, chatOpen = false, leaving = false;
 const me = { pos: new THREE.Vector3(), vel: new THREE.Vector3(), kb: new THREE.Vector3(), yaw: 0, pitch: 0, onGround: false, alive: true, hp: 100, armor: 0, w: 2, owned: [0, 1, 2], gren: 2, ammo: WP.map((w) => w.mag), reloadEnd: 0, reloadStart: 0, nextFire: 0, zoom: false, adsT: 0, sprintT: 0, crouch: false, eye: EYE, dashT: 0, dashCd: 0, dashDir: new THREE.Vector3(), bob: 0, recoil: 0, drawT: 1, fireT: 1, spin: 0, spinV: 0, swayX: 0, swayY: 0, reloadFx: 0 };
+// dokunmatik cihaz: telefonda sanal joystick ve düğmeler (touch.js); ?touch=1 / ?touch=0 ile zorlanır
+const TOUCH = (() => { try { const q = /[?&]touch=([01])/.exec(location.search); if (q) return q[1] === '1'; return (window.matchMedia && matchMedia('(pointer: coarse)').matches) || ('ontouchstart' in window && navigator.maxTouchPoints > 0); } catch (e) { return false; } })();
+const tj = { x: 0, y: 0, sprint: false, crouch: false };
+if (TOUCH) document.body.classList.add('touch');
 const keys = {}, tagMeshes = new Map(), projMeshes = new Map(), chickenMeshes = new Map();
 const lastShot = new Map();
 let killerInfo = null;
@@ -420,7 +459,7 @@ function applyRound(m) {
 function clearTags() { for (const m of tagMeshes.values()) scene.remove(m); tagMeshes.clear(); clearLoot(); }
 function clearProjs() { for (const m of projMeshes.values()) scene.remove(m); projMeshes.clear(); }
 const now2 = () => performance.now(); let waitAt = 0, waitDiv = null;
-function waitEl() { if (!waitDiv) { waitDiv = document.createElement('div'); waitDiv.style.cssText = 'position:fixed;top:17%;left:50%;transform:translateX(-50%);z-index:5;padding:8px 18px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.25);font:700 15px var(--hud,sans-serif);letter-spacing:.08em;color:#ffd23f;pointer-events:none;display:none'; waitDiv.textContent = 'GERÇEK OYUNCULAR BEKLENİYOR… (davet için oda kodunu paylaş)'; document.body.appendChild(waitDiv); } return waitDiv; }
+function waitEl() { if (!waitDiv) { waitDiv = document.createElement('div'); waitDiv.style.cssText = 'position:fixed;top:' + (TOUCH ? '64px' : '17%') + ';max-width:' + (TOUCH ? '46vw' : '90vw') + ';font-size:' + (TOUCH ? '11px' : '') + ';left:50%;transform:translateX(-50%);z-index:5;padding:8px 18px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.25);font:700 15px var(--hud,sans-serif);letter-spacing:.08em;color:#ffd23f;pointer-events:none;display:none'; waitDiv.textContent = 'GERÇEK OYUNCULAR BEKLENİYOR… (davet için oda kodunu paylaş)'; document.body.appendChild(waitDiv); } return waitDiv; }
 // künye: çerçeveli plaka, zincir, ışık sütunu ve yer halkası (kendi künyen kırmızı, düşmanınki altın)
 function makeTag(own) {
   const g = new THREE.Group(), c = own ? 0xff3b30 : 0xffd23f, d = own ? 0x5a0f0b : 0x6b5200;
@@ -711,7 +750,7 @@ function throwNade() {
 }
 function dash() {
   if (!me.alive || me.dashCd > 0 || !locked) return;
-  const f = (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0), r = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0);
+  const f = Math.max(-1, Math.min(1, (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0) + tj.y)), r = Math.max(-1, Math.min(1, (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0) + tj.x));
   let dx = -Math.sin(me.yaw) * (f || (r ? 0 : 1)) + Math.cos(me.yaw) * r, dz = -Math.cos(me.yaw) * (f || (r ? 0 : 1)) - Math.sin(me.yaw) * r;
   const l = Math.hypot(dx, dz) || 1; me.dashDir.set(dx / l, 0, dz / l); me.dashT = 0.17; me.dashCd = 2.4; sfx.dash();
 }
@@ -732,16 +771,19 @@ addEventListener('keydown', (e) => {
 });
 addEventListener('keyup', (e) => { keys[e.code] = false; if (e.code === 'Tab') $('board').style.display = 'none'; });
 addEventListener('wheel', (e) => { if (locked && !chatOpen) cycleWeapon(e.deltaY > 0 ? 1 : -1); }, { passive: true });
-document.addEventListener('pointerlockchange', () => {
-  locked = document.pointerLockElement === canvas;
+function onLockChange(isLocked) {
+  locked = isLocked;
   if (document.body.classList.contains('playing')) {
     if (!locked && chatOpen) closeChat(false);
     paused = !locked && !roundOver; document.body.classList.toggle('paused', paused);
     if (paused) { mouseDown = false; for (const k in keys) keys[k] = false; syncPauseUi(); if (!(LOCAL && ws instanceof window.FakeWS)) send({ t: 'away' }); }
     else if (connected && !(LOCAL && ws instanceof window.FakeWS)) send({ t: 'back' });
   }
-});
-canvas.addEventListener('click', () => { if (connected && !locked && !paused) canvas.requestPointerLock(); });
+}
+document.addEventListener('pointerlockchange', () => onLockChange(document.pointerLockElement === canvas));
+// dokunmatikte imleç kilidi yok: oyun "kilitli" sayılır, duraklatma ☰ düğmesiyle olur
+function requestLock() { if (TOUCH) onLockChange(true); else canvas.requestPointerLock(); }
+canvas.addEventListener('click', () => { if (!TOUCH && connected && !locked && !paused) canvas.requestPointerLock(); });
 addEventListener('mousemove', (e) => {
   if (!locked) return;
   const sc = me.zoom ? (WP[me.w].zoom && WP[me.w].zoom < 30 ? 0.0009 : 0.0015) : 0.0022, k = sc * S().sens;
@@ -754,17 +796,17 @@ addEventListener('contextmenu', (e) => e.preventDefault());
 
 // ---------- fizik ----------
 function physics(dt) {
-  const want = !!(keys.ControlLeft || keys.KeyC) && me.alive;
+  const want = !!(keys.ControlLeft || keys.KeyC || tj.crouch) && me.alive;
   if (want && !me.crouch) me.crouch = true;
   else if (!want && me.crouch && !M.solidBox(me.pos.x, me.pos.y, me.pos.z, RAD, 1.8)) me.crouch = false;
   me.eye += ((me.crouch ? EYE_C : EYE) - me.eye) * Math.min(1, dt * 14);
   me.dashCd = Math.max(0, me.dashCd - dt);
   let ix = 0, iz = 0, speed = 0, sprint = false;
   if (me.alive && locked && !chatOpen) {
-    const f = (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0), r = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0);
+    const f = Math.max(-1, Math.min(1, (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0) + tj.y)), r = Math.max(-1, Math.min(1, (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0) + tj.x));
     const dx = -Math.sin(me.yaw) * f + Math.cos(me.yaw) * r, dz = -Math.cos(me.yaw) * f - Math.sin(me.yaw) * r;
-    const l = Math.hypot(dx, dz);
-    if (l > 0) { sprint = !!(keys.ShiftLeft || keys.ShiftRight) && !me.zoom && !me.crouch; speed = me.crouch ? 2.6 : sprint ? 7.4 : 5.2; if (me.zoom) speed *= 0.65; if (WP[me.w].spin) speed *= 0.75; ix = (dx / l) * speed; iz = (dz / l) * speed; }
+    const l = Math.hypot(dx, dz), mag = Math.min(1, l);
+    if (l > 0) { sprint = !!(keys.ShiftLeft || keys.ShiftRight || tj.sprint) && !me.zoom && !me.crouch; speed = me.crouch ? 2.6 : sprint ? 7.4 : 5.2; if (me.zoom) speed *= 0.65; if (WP[me.w].spin) speed *= 0.75; ix = (dx / l) * speed * mag; iz = (dz / l) * speed * mag; }
     if (keys.Space && me.onGround && !me.crouch) { me.vel.y = 8.2; me.onGround = false; }
   }
   me.sprinting = sprint && me.onGround;
@@ -792,6 +834,7 @@ function animateViewmodel(dt, now, hv, alive) {
   me.spinV += (spinTarget - me.spinV) * Math.min(1, dt * (spinTarget ? 4 : 2)); me.spin += me.spinV * dt;
   const rt = reloading ? Math.min(1, (now - me.reloadStart) / reloadOf(me.w)) : null;
   if (rt != null) { const tbl = RELOAD_SFX[me.w] || RELOAD_SFX.def; while (me.reloadFx < tbl.length && rt >= tbl[me.reloadFx][0]) { tbl[me.reloadFx][1](); me.reloadFx++; } }
+  VW.flicker(vms[me.w], now / 1000);
   const off = VW.pose(vms[me.w], me.w, { draw: me.drawT < 1 ? me.drawT : null, fire: me.fireT < 1 ? me.fireT : null, reload: rt, spin: me.spin });
   const hasAds = !!def.ads && W.kind !== 'melee';
   const scoped = W.zoom && W.zoom < 30;
@@ -837,6 +880,7 @@ function frame(now) {
     let dy = a.yaw - a.group.rotation.y; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); a.group.rotation.y += dy * Math.min(1, dt * 12);
     const mv = a.group.position.distanceTo(a.last); a.last.copy(a.group.position); a.moved = a.moved * 0.8 + mv * 4;
     a.walk += mv * 5; const sw = Math.sin(a.walk) * Math.min(0.9, a.moved * 0.4); a.l1.rotation.x = sw; a.l2.rotation.x = -sw;
+    if (a.group.position.distanceTo(camera.position) < 40) { if (a.gunCl && a.gun.children[0]) VW.flicker(a.gun.children[0], t); flickAvatar(a, t); }
   }
   for (const m of projMeshes.values()) {
     m.position.lerp(m.userData.t, Math.min(1, dt * 20));
@@ -900,7 +944,7 @@ function menuFrame(t, dt) {
   }
   if (!prev.drag) { prev.yaw += prev.vel * dt + dt * 0.15; prev.vel *= Math.max(0, 1 - dt * 3); }
   const a = prev.avatar;
-  if (a) { a.group.rotation.y = prev.yaw; a.l1.rotation.x = Math.sin(t * 2) * 0.06; a.l2.rotation.x = -Math.sin(t * 2) * 0.06; a.head.rotation.y = Math.sin(t * 0.8) * 0.25; }
+  if (a) { a.group.rotation.y = prev.yaw; a.l1.rotation.x = Math.sin(t * 2) * 0.06; a.l2.rotation.x = -Math.sin(t * 2) * 0.06; a.head.rotation.y = Math.sin(t * 0.8) * 0.25; if (a.gun.children[0]) VW.flicker(a.gun.children[0], t); flickAvatar(a, t); }
   camera.fov = 38; camera.updateProjectionMatrix();
   camera.position.set(0, 1.55, 5.2); camera.rotation.set(-0.05, 0, 0);
   gunRoot.visible = false;
@@ -920,7 +964,7 @@ function startPlaying() {
   $('chatlog').innerHTML = ''; $('feed').innerHTML = '';
   gunRoot.visible = true;
   paused = true; document.body.classList.add('paused'); syncPauseUi();
-  canvas.requestPointerLock();
+  requestLock();
 }
 function leave() {
   ROOM = null; { const rt = $('roomtag'); if (rt) rt.style.display = 'none'; }
@@ -947,7 +991,7 @@ function syncPauseUi() {
   const online = !(LOCAL && ws instanceof window.FakeWS);
   $('pnote').innerHTML = online ? (ROOM ? '<b>Oda ' + ROOM.code + (ROOM.priv ? ' (özel)' : '') + '</b> &middot; ' : '') + '<b>Çevrimiçi oyun:</b> senin için menü açık, diğer oyuncular için oyun devam eder. Menü kalkanı 6 sn korur, sonra hedef olabilirsin.' : 'Yerel oyun duraklatıldı.';
   $('ptitle').textContent = online ? 'MENÜ' : 'DURAKLATILDI'; $('pSens').value = S().sens; $('pVol').value = S().vol; $('pFov').value = S().fov; $('pSensV').textContent = (+S().sens).toFixed(2); $('pVolV').textContent = Math.round(S().vol * 100); $('pFovV').textContent = S().fov; }
-$('pResume').addEventListener('click', () => { sfx.ui(); canvas.requestPointerLock(); });
+$('pResume').addEventListener('click', () => { sfx.ui(); requestLock(); });
 $('pMenu').addEventListener('click', () => { sfx.ui(); leave(); });
 function bindSetting(id, key, fmt, apply) { $(id).addEventListener('input', () => { const v = +$(id).value; S()[key] = v; $(id + 'V').textContent = fmt(v); PR.save(); if (apply) apply(v); }); }
 bindSetting('pSens', 'sens', (v) => v.toFixed(2)); bindSetting('pVol', 'vol', (v) => Math.round(v * 100), setVolume); bindSetting('pFov', 'fov', (v) => v, () => { if (connected) setZoom(me.zoom); });
@@ -963,6 +1007,8 @@ const VA = {
   preview: { set(cfg) { prev.cfg = cfg; } },
 };
 VA.dbg = { get: () => ({ MODE, FL, flags: flagG.length, bases: baseG.length, myId, team: myTeam(), TS, zombie: typeof ZW !== 'undefined' ? ZW : null }), onMsg };
+// touch.js için denetimli erişim (client.js bir IIFE içinde)
+VA.T = { TOUCH, tj, keys, WP, S, me, get locked() { return locked; }, get paused() { return paused; }, set mouseDown(v) { mouseDown = v; }, tryFire, setZoom, reload, cycleWeapon, throwNade, dash, refreshBoard, onLockChange, setWeapon, $ };
 window.VA = VA;
 requestAnimationFrame(frame);
 })();

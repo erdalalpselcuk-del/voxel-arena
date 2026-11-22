@@ -104,3 +104,8 @@ Ana menüde alttaki MOD ve HARİTA kartlarına basınca CS tarzı "Maç Seç" ek
 **Sınır:** PX, XP ve istatistikler istemciden gelir, sunucu doğrulamaz (hile koruması yok).
 
 Sürekli açık kalma için bkz. **DEPLOY.md** (Fly.io, VPS + systemd + Caddy, Render, Cloudflare Tunnel; Dockerfile ve `/healthz` dahil).
+
+## Mobil, giriş ekranı ve yeni skin paketleri
+- **Mobil**: dokunmatik cihazda otomatik açılır (`?touch=1` ile zorlanır). Sol yarı kayan joystick (tam çekince koşu), sağ yarı bakış, ATEŞ/ZIPLA/EĞİL/NİŞAN/ŞARJÖR/BOMBA/ATIL düğmeleri, tam ekran + yatay kilit. Dikeyde "telefonu yatay çevir" uyarısı.
+- **Giriş (intro)**: taçlı logo, altın harflerle animasyonlu "Erdal Alp Selçuk" yapımcı yazısı, ardından isim girişi. `?nointro` ile atlanır.
+- **Yeni skinler**: Basket forması #9 "GENÇBAY" (3 renk), Yapımcı (altın taç), Alevli karakter; alevli/neon silah koleksiyonları (Cehennem Alevi, Mavi Alev, Ateş Topu, Kral, Smaç, Zehir, Okyanus, Hazine Avcısı, Neon Gökkuşağı). Sunucu skin indeksini sınırlar, herkes birbirinin skinini görür.

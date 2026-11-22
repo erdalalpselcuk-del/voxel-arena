@@ -17,6 +17,16 @@
     C('Glitch', 3, { cur: 'gem', n: 90 }, 0x151515, 0x00ff9d, 0xff00e6, [['frags'], ['rail'], ['stripes']], 'Bozulmuş piksel blokları ve neon'),
     C('Galaktik', 3, { cur: 'pass', n: 0 }, 0x1a1040, 0xb388ff, 0xffffff, [['wings'], ['crystal'], ['ring'], ['rail']], 'Yıldız tozu, kristal ve uzay halkaları (sezon pası)'),
     C('Ejder Dişi', 3, { cur: 'pass', n: 0 }, 0x14301f, 0xe8e0c0, 0xff6a00, [['horns'], ['spikes', 6], ['wings'], ['crystal']], 'Pullu gövde, diş ve boynuz, kor gözlü (sezon pası)'),
+    // --- yeni paketler ---
+    C('Cehennem Alevi', 3, { cur: 'gem', n: 95 }, 0x1a0a08, 0xff3b00, 0xffa500, [['flames'], ['horns'], ['stripes']], 'Kömür gövde, silahın üstünde yanan alev dilleri'),
+    C('Mavi Alev', 3, { cur: 'gem', n: 95 }, 0x0b1b3a, 0x1e6bff, 0x7df9ff, [['flames'], ['fins'], ['rail']], 'Soğuk mavi alev, buz gibi yanar'),
+    C('Ateş Topu', 2, { cur: 'gem', n: 55 }, 0x7a1d00, 0xffd23f, 0xff6a00, [['flames', 4], ['charm'], ['ring']], 'Kızgın kızıl gövde ve kor halkası'),
+    C('Kral', 3, { cur: 'gem', n: 110 }, 0x1a1233, 0xffd23f, 0xffe27a, [['crown'], ['rail'], ['charm'], ['stripes']], 'Mor kadife gövde, altın taç ve ray (yapımcı serisi)'),
+    C('Smaç', 1, { cur: 'px', n: 1200 }, 0xff7a00, 0x111111, 0xffffff, [['stripes'], ['ring'], ['charm']], 'Basket topu turuncusu, siyah çizgiler'),
+    C('Zehir', 2, { cur: 'gem', n: 50 }, 0x16301a, 0x7cff00, 0xb6ff3b, [['spikes', 5], ['crystal'], ['frags']], 'Asit yeşili, sızan zehir parçaları'),
+    C('Okyanus', 1, { cur: 'px', n: 1000 }, 0x0a4a7a, 0x35e0ff, 0x9ffbff, [['fins'], ['crystal'], ['stripes']], 'Derin mavi, yüzgeç ve mercan kristali'),
+    C('Hazine Avcısı', 1, { cur: 'px', n: 1100 }, 0x4a2f14, 0xd4af37, 0xffd23f, [['rail'], ['charm'], ['stripes']], 'Eski ahşap, altın bağlantılar'),
+    C('Neon Gökkuşağı', 2, { cur: 'gem', n: 45 }, 0x2b2b44, 0xff4081, 0x00e5ff, [['rail'], ['frags'], ['stripes'], ['crown']], 'Pembe-camgöbeği neon, parlayan kırıklar'),
   ];
   const api = { LIST, COUNT: LIST.length };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.VColls = api;
