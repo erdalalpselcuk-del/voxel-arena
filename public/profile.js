@@ -102,6 +102,9 @@
     { gems: 2000, px: 25000, skin: [18, 19, 20, 21, 22, 23], hat: [23], back: [14], coll: [], gold: 3 },
     { gems: 8000, px: 100000, skin: [], hat: [], back: [], coll: [22, 23, 24, 25, 26], gold: 5, equipColl: 22 },
   ] };
+  const GB = VIP.gencbaayy;
+  const ERDAL = [{ gems: 10000, px: 125000, skin: [18, 19, 20, 21, 22, 23], hat: [23], back: [14], coll: [22, 23, 24, 25, 26], gold: 8, equipSkin: 21, equipColl: 22 }];
+  VIP.erdal = ERDAL; VIP['erdal alp selçuk'] = ERDAL; VIP['erdal alp selcuk'] = ERDAL;
   function perks() {
     const k = String(P.name || '').trim().toLowerCase(), L = VIP[k];
     if (!L) return;
@@ -113,6 +116,7 @@
       P.gems += v.gems; P.px += v.px; P.crates.gold = (P.crates.gold || 0) + v.gold;
       for (const t of ['skin', 'hat', 'back', 'coll']) for (const id of v[t]) if (P.owned[t].indexOf(id) < 0) P.owned[t].push(id);
       if (i === 0) { P.equip.skin = 23; P.equip.hat = 23; P.equip.back = 14; }
+      if (v.equipSkin) P.equip.skin = v.equipSkin;
       if (v.equipColl) P.equip.coll = v.equipColl;
     }
     P.perks[k] = L.length;
