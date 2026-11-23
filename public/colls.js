@@ -27,6 +27,11 @@
     C('Okyanus', 1, { cur: 'px', n: 1000 }, 0x0a4a7a, 0x35e0ff, 0x9ffbff, [['fins'], ['crystal'], ['stripes']], 'Derin mavi, yüzgeç ve mercan kristali'),
     C('Hazine Avcısı', 1, { cur: 'px', n: 1100 }, 0x4a2f14, 0xd4af37, 0xffd23f, [['rail'], ['charm'], ['stripes']], 'Eski ahşap, altın bağlantılar'),
     C('Neon Gökkuşağı', 2, { cur: 'gem', n: 45 }, 0x2b2b44, 0xff4081, 0x00e5ff, [['rail'], ['frags'], ['stripes'], ['crown']], 'Pembe-camgöbeği neon, parlayan kırıklar'),
+    C('Gençbay 17', 3, { cur: 'gem', n: 120 }, 0xff7a00, 0x111111, 0xffc107, [['stripes'], ['ring'], ['crown'], ['charm']], 'Basket topu turuncusu, siyah çizgi, altın 17'),
+    C('Gençbay Parket', 2, { cur: 'px', n: 1500 }, 0xb5793a, 0xf2d29b, 0xff7a00, [['rail'], ['stripes'], ['charm']], 'Parke zemin ahşabı, turuncu top detayları'),
+    C('Gençbay Sarı-Lacivert', 2, { cur: 'gem', n: 70 }, 0x14213d, 0xffd23f, 0xffd23f, [['stripes'], ['rail'], ['ring']], 'Forma renkleri: lacivert gövde, sarı şeritler'),
+    C('Gençbay Smaç Alevi', 3, { cur: 'gem', n: 130 }, 0xff7a00, 0x1a1a1a, 0xff3d00, [['flames', 3], ['stripes'], ['ring']], 'Smaçta alev alan basket topu silahı'),
+    C('Gençbay Şampiyon', 3, { cur: 'gem', n: 150 }, 0xffc107, 0x111111, 0xffffff, [['crown'], ['flames', 2], ['stripes'], ['charm']], 'Altın şampiyonluk kupası, taçlı ve alevli'),
   ];
   const api = { LIST, COUNT: LIST.length };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.VColls = api;

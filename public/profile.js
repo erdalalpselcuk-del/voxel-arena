@@ -98,14 +98,24 @@
     return P;
   }
   // özel hesap: 'gencbaayy' adıyla bir kez elmas/PX ve tüm Gençbay seti verilir
-  const VIP = { gencbaayy: { gems: 2000, px: 25000, skin: [18, 19, 20, 21, 22, 23], hat: [23], back: [14], gold: 3 } };
+  const VIP = { gencbaayy: [
+    { gems: 2000, px: 25000, skin: [18, 19, 20, 21, 22, 23], hat: [23], back: [14], coll: [], gold: 3 },
+    { gems: 8000, px: 100000, skin: [], hat: [], back: [], coll: [22, 23, 24, 25, 26], gold: 5, equipColl: 22 },
+  ] };
   function perks() {
-    const k = String(P.name || '').trim().toLowerCase(), v = VIP[k];
-    if (!v || (P.perks && P.perks[k])) return;
-    P.perks = Object.assign(P.perks || {}, { [k]: 1 });
-    P.gems += v.gems; P.px += v.px; P.crates.gold = (P.crates.gold || 0) + v.gold;
-    for (const t of ['skin', 'hat', 'back']) for (const id of v[t]) if (P.owned[t].indexOf(id) < 0) P.owned[t].push(id);
-    P.equip.skin = 23; P.equip.hat = 23; P.equip.back = 14;
+    const k = String(P.name || '').trim().toLowerCase(), L = VIP[k];
+    if (!L) return;
+    P.perks = P.perks || {};
+    const have = P.perks[k] | 0;
+    if (have >= L.length) return;
+    for (let i = have; i < L.length; i++) {
+      const v = L[i];
+      P.gems += v.gems; P.px += v.px; P.crates.gold = (P.crates.gold || 0) + v.gold;
+      for (const t of ['skin', 'hat', 'back', 'coll']) for (const id of v[t]) if (P.owned[t].indexOf(id) < 0) P.owned[t].push(id);
+      if (i === 0) { P.equip.skin = 23; P.equip.hat = 23; P.equip.back = 14; }
+      if (v.equipColl) P.equip.coll = v.equipColl;
+    }
+    P.perks[k] = L.length;
   }
   function save() { perks(); P.rev = Date.now(); try { localStorage.setItem('va_prof2', JSON.stringify(P)); } catch (e) {} if (saveHook) { try { saveHook(); } catch (e) {} } }
   // bulut: sunucudaki kayıt daha yeniyse yerel profilin yerine geçer (kanca tetiklenmez)
