@@ -375,6 +375,7 @@
   @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
   #intro.stB #iBrand{transform:scale(.42);transform-origin:50% 100%;opacity:.9;position:absolute;bottom:2vh;top:auto;left:0;right:0}
   #intro.stB #iCrown{animation:none;opacity:1;transform:none}
+  #intro.stB #iName{flex-wrap:nowrap;white-space:nowrap}
   #iGame,#iLogin{display:none}
   #intro.stB #iGame{display:block;text-align:center;animation:slam .8s cubic-bezier(.2,1.5,.4,1) both}
   #intro.stB #iLogin{display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:26px;animation:fadeUp .6s ease .5s both}
@@ -383,8 +384,21 @@
   #iGame .t1{color:#f4f6fa}#iGame .t2{color:#ffd23f;text-shadow:0 5px 0 rgba(0,0,0,.55),0 0 38px rgba(255,200,40,.5)}
   #iNick{width:min(300px,80vw);padding:12px 14px;text-align:center;background:rgba(0,0,0,.5);color:#fff;border:2px solid rgba(255,255,255,.25);font:700 20px var(--hud,sans-serif);outline:none;user-select:text;-webkit-user-select:text}
   #iNick:focus{border-color:#ffd23f}
+  #iTabs{display:flex;gap:6px}#iTabs button{padding:7px 14px;background:rgba(0,0,0,.45);color:#cfd6e4;border:1px solid rgba(255,255,255,.2);font:700 13px var(--hud,sans-serif);letter-spacing:1.5px;cursor:pointer}#iTabs button.on{color:#ffd23f;border-color:#ffd23f}
+  #iPass,#iCode{width:min(300px,80vw);padding:11px 14px;text-align:center;background:rgba(0,0,0,.5);color:#fff;border:2px solid rgba(255,255,255,.25);font:700 17px var(--hud,sans-serif);outline:none}
+  #iPass:focus,#iCode:focus{border-color:#ffd23f}#iErr{min-height:18px;color:#ff8a80;font:700 13px var(--hud,sans-serif);max-width:80vw;text-align:center}
+  #iWho{color:#ffd23f;font:700 14px var(--hud,sans-serif);text-align:center}#iWho a{color:#9ecbff;cursor:pointer;text-decoration:underline;margin-left:8px}
   #iGo{width:min(300px,80vw);padding:14px;font:800 24px var(--hud,sans-serif);letter-spacing:3px;color:#17240f;background:linear-gradient(#7bd957,#4caf50);border:0;border-bottom:5px solid #2f7a32;cursor:pointer;animation:goPulse 1.6s ease-in-out infinite}
   #iGo:active{transform:translateY(3px);border-bottom-width:2px}
+  @media (max-height:520px){
+    #intro.stB #iBrand{display:none}
+    #iGame .t1,#iGame .t2{display:inline;font-size:34px;margin:0 6px}
+    #intro.stB #iLogin{margin-top:8px;gap:6px 8px;flex-direction:row;flex-wrap:wrap;justify-content:center;max-width:94vw}
+    #iTabs{flex-basis:100%;justify-content:center}#iTabs button{padding:5px 12px;font-size:12px}
+    #iNick,#iPass,#iCode{width:190px;padding:7px 10px;font-size:15px}
+    #iGo{width:auto;padding:8px 26px;font-size:17px;border-bottom-width:3px}#iErr{flex-basis:100%;min-height:14px;font-size:12px}#iWho{flex-basis:100%}
+  }
+
   @keyframes goPulse{50%{box-shadow:0 0 28px rgba(123,217,87,.6)}}
   #iHint{position:absolute;bottom:10px;left:0;right:0;text-align:center;font-size:12px;letter-spacing:2px;color:rgba(255,255,255,.35)}
   #credit{position:fixed;left:12px;bottom:8px;z-index:6;font:700 12px var(--hud,sans-serif);letter-spacing:1.5px;color:#c9a227;opacity:.85;pointer-events:none;text-shadow:0 1px 0 #000}
@@ -431,7 +445,7 @@
   <div id="topbar">
     <h1 class="logo">VOXEL <span>ARENA</span></h1>
     <div id="me"><input id="name" maxlength="16" placeholder="Takma adın" autocomplete="off" aria-label="Takma ad"><div><div id="lvl">SEV 1</div><div id="xpbar"><i></i></div></div></div>
-    <div id="cur"><div class="chip" id="netst" style="font-size:13px;cursor:default;display:flex;align-items:center">YEREL</div><div class="chip"><b id="ppx">0</b> PX</div><div class="chip gem"><b id="pgem">0</b> &#9670;</div></div>
+    <div id="cur"><div class="chip" id="netst" style="font-size:13px;cursor:default;display:flex;align-items:center">YEREL</div><div class="chip" id="prank" style="display:none;color:#ffd23f"></div><div class="chip"><b id="ppx">0</b> PX</div><div class="chip gem"><b id="pgem">0</b> &#9670;</div></div>
   </div>
   <nav class="nav" id="nav" aria-label="Menü"></nav>
   <div id="center"><div id="pvinfo"></div><div class="hint">Karakteri döndürmek için sürükle</div></div>
@@ -483,8 +497,13 @@
   </div>
   <div id="iGame"><div class="t1">VOXEL</div><div class="t2">ARENA</div></div>
   <div id="iLogin">
-    <input id="iNick" maxlength="16" placeholder="Takma adını yaz" autocomplete="off" spellcheck="false">
+    <div id="iTabs"><button data-m="login" class="on">GİRİŞ</button><button data-m="reg">KAYIT</button><button data-m="guest">MİSAFİR</button></div>
+    <input id="iNick" maxlength="16" placeholder="Kullanıcı adı" autocomplete="username" spellcheck="false" autocapitalize="off">
+    <input id="iPass" type="password" maxlength="64" placeholder="Parola (en az 6)" autocomplete="current-password">
+    <input id="iCode" maxlength="40" placeholder="Ayrılmış ad kodu (varsa)" autocomplete="off" style="display:none">
+    <div id="iErr"></div>
     <button id="iGo">GİRİŞ YAP</button>
+    <div id="iWho"></div>
   </div>
   <div id="iHint">DOKUN: ATLA</div>
 </div>

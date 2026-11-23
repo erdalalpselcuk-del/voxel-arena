@@ -119,7 +119,7 @@ const players = new Map(), avatars = new Map();
 const TEAMCOL = [0x3a7bd5, 0xe74c3c], TEAMHEX = ['#4d9bff', '#ff5a4d'], TEAMTXT = ['MAVİ', 'KIRMIZI'];
 let TS = [0, 0];
 const myTeam = () => { const q = players.get(myId); return q ? q.tm | 0 : 0; };
-const TEAMMODE = () => MODE === 'tdm' || MODE === 'ctf';
+const TEAMMODE = () => MODE === 'tdm' || MODE === 'ctf' || MODE === 'comp';
 let UPL = {}; // silah güçlendirme seviyeleri
 const upv = (wi, k) => 1 + (k === 'dmg' || k === 'mag' ? 1 : -1) * PR.UP_FX[k] * ((UPL[wi] | 0));
 const magOf = (wi) => (WP[wi].mag ? Math.round(WP[wi].mag * upv(wi, 'mag')) : 0);
@@ -214,6 +214,20 @@ function makeAvatar(p) {
     case 'royal': bx(0.57, 0.1, 0.32, 0xd32f2f, 0, 1.38, 0); bx(0.57, 0.06, 0.33, 0xffffff, 0, 1.3, 0); break;
     case 'rainbow': [0xff1744, 0xff9100, 0xffea00, 0x00e676, 0x2979ff].forEach((c, i) => { const m = new THREE.Mesh(blockGeo, basicMat(c)); m.scale.set(0.57, 0.16, 0.32); m.position.set(0, 1.35 - i * 0.16, 0); body.add(m); }); break;
     case 'galaxy': for (const [x, y] of [[-0.15, 1.3], [0.1, 1.15], [-0.05, 0.95], [0.18, 0.85], [-0.2, 0.8]]) { const m = new THREE.Mesh(blockGeo, basicMat(0xffffff)); m.scale.set(0.05, 0.05, 0.02); m.position.set(x, y, -0.16); body.add(m); } head.add(box(0.05, 0.05, 0.02, 0xb388ff, 0.12, 0.12, -0.205)); break;
+    case 'suit': {
+      const s = sk.s, B = s.b, T = s.t, m = s.m;
+      bx(0.6, 0.84, 0.34, B, 0, 1.0, 0); bx(0.64, 0.08, 0.37, T, 0, 0.62, 0); bx(0.12, 0.84, 0.35, T, 0, 1.0, 0);
+      for (const sd of [-1, 1]) bx(0.2, 0.1, 0.4, T, sd * 0.38, 1.4, 0);
+      for (const lg of [l1, l2]) lg.add(box(0.27, 0.3, 0.29, B, 0, -0.12, 0), box(0.28, 0.06, 0.3, T, 0, -0.25, 0));
+      if (s.glow) { bx(0.5, 0.03, 0.36, T, 0, 1.15, 0); bx(0.5, 0.03, 0.36, T, 0, 0.85, 0); }
+      if (m === 'ninja') { head.add(box(0.43, 0.24, 0.43, B, 0, 0.1, 0), box(0.43, 0.14, 0.43, B, 0, -0.14, 0), box(0.44, 0.04, 0.44, T, 0, 0.23, 0), box(0.1, 0.03, 0.05, T, 0.2, 0.0, -0.22)); }
+      else if (m === 'visor') { head.add(box(0.47, 0.47, 0.47, B, 0, 0, 0), box(0.4, 0.17, 0.03, s.v || T, 0, 0.02, 0.24), box(0.48, 0.05, 0.48, T, 0, -0.17, 0)); }
+      else if (m === 'kabuto') { head.add(box(0.47, 0.18, 0.47, B, 0, 0.17, 0), box(0.49, 0.04, 0.49, T, 0, 0.09, 0), box(0.06, 0.2, 0.34, T, 0, 0.33, 0), box(0.06, 0.18, 0.06, T, -0.24, -0.02, 0.1), box(0.06, 0.18, 0.06, T, 0.24, -0.02, 0.1)); }
+      else if (m === 'robot') { head.add(box(0.47, 0.47, 0.47, B, 0, 0, 0), box(0.1, 0.07, 0.03, T, -0.1, 0.06, 0.24), box(0.1, 0.07, 0.03, T, 0.1, 0.06, 0.24), box(0.22, 0.04, 0.03, T, 0, -0.1, 0.24), box(0.03, 0.18, 0.03, T, 0, 0.32, 0), box(0.08, 0.08, 0.08, T, 0, 0.44, 0)); }
+      else if (m === 'pirate') { head.add(box(0.54, 0.07, 0.54, 0x111111, 0, 0.2, 0), box(0.4, 0.13, 0.4, 0x111111, 0, 0.29, 0), box(0.08, 0.08, 0.03, 0xffffff, 0, 0.29, 0.21), box(0.1, 0.1, 0.03, 0x111111, 0.1, 0.02, 0.21), box(0.46, 0.03, 0.03, 0x111111, 0, 0.1, 0.0)); }
+      else if (m === 'knight') { head.add(box(0.47, 0.38, 0.47, B, 0, 0.05, 0), box(0.3, 0.04, 0.03, 0x111111, 0, 0.08, 0.24), box(0.06, 0.2, 0.34, T, 0, 0.3, 0)); }
+      break;
+    }
     case 'jersey': {
       const [jm, jt] = sk.jc, cell = 0.075, NUM = String(sk.num || '9');
       const FONT = { 0: ['111', '101', '101', '101', '111'], 1: ['010', '110', '010', '010', '111'], 2: ['111', '001', '111', '100', '111'], 3: ['111', '001', '111', '001', '111'], 4: ['101', '101', '111', '001', '001'], 5: ['111', '100', '111', '001', '111'], 6: ['111', '100', '111', '101', '111'], 7: ['111', '001', '010', '010', '010'], 8: ['111', '101', '111', '101', '111'], 9: ['111', '101', '111', '001', '111'] };
@@ -446,7 +460,7 @@ function connect(info) {
   if (ws) { ws.onclose = null; try { ws.close(); } catch (e) {} ws = null; }
   leaving = false; rejected = false; UPL = Object.assign({}, info.up || {});
   ws = info.server ? new WebSocket(info.server) : LOCAL ? new window.FakeWS() : new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
-  ws.onopen = () => { send(Object.assign({ t: 'join' }, info, { cid })); clearInterval(pingT); gotRtt = false; if (!LOCAL || info.server) { const pg = () => send({ t: 'ping', ts: performance.now(), rtt: gotRtt ? Math.round(rtt) : undefined }); pg(); pingT = setInterval(pg, 2000); } };
+  ws.onopen = () => { send(Object.assign({ t: 'join' }, info, { cid, tok: (() => { try { return localStorage.getItem('va_token') || ''; } catch (e) { return ''; } })() })); clearInterval(pingT); gotRtt = false; if (!LOCAL || info.server) { const pg = () => send({ t: 'ping', ts: performance.now(), rtt: gotRtt ? Math.round(rtt) : undefined }); pg(); pingT = setInterval(pg, 2000); } };
   ws.onclose = () => { clearInterval(pingT); if (rejected) return; if (!leaving && !connected && VA.hooks.status) VA.hooks.status('Sunucuya bağlanılamadı.'); if (!leaving && connected) { connected = false; showMsg('Bağlantı koptu.<small>Esc ile ana menüye dön</small>', 0); } };
   ws.onerror = () => { if (VA.hooks.status) VA.hooks.status('Sunucuya bağlanılamadı.'); };
   ws.onmessage = (e) => onMsg(JSON.parse(e.data));
@@ -455,7 +469,7 @@ function resetLoadout(m) { me.owned = m.owned || [0, 1, 2]; me.gren = m.gren == 
 function applyRound(m) {
   roundOver = false; MODE = m.mode; WIN = m.win; LABEL = m.label;
   buildMap(m.seed, m.theme); clearTags(); clearProjs();
-  TS = m.ts || [0, 0]; $('mode').textContent = (MODE === 'kc' ? 'KILL CONFIRMED' : MODE === 'ffa' ? 'HERKES TEK' : MODE === 'tdm' ? 'TAKIM SAVAŞI' : MODE === 'ctf' ? 'BAYRAK KAPMACA' : MODE === 'zom' ? 'ZOMBİ DALGASI' : 'ROKET ARENASI'); $('mapname').textContent = tr(M.name);
+  TS = m.ts || [0, 0]; $('mode').textContent = (MODE === 'kc' ? 'KILL CONFIRMED' : MODE === 'ffa' ? 'HERKES TEK' : MODE === 'tdm' ? 'TAKIM SAVAŞI' : MODE === 'ctf' ? 'BAYRAK KAPMACA' : MODE === 'zom' ? 'ZOMBİ DALGASI' : MODE === 'comp' ? 'REKABETÇİ 5v5' : MODE === 'big' ? 'BÜYÜK SAVAŞ' : 'ROKET ARENASI'); $('mapname').textContent = tr(M.name);
   if (m.pk) setPickups(m.pk);
   setFlags(m.fl); ZW = m.zw || 0;
 }
@@ -557,6 +571,7 @@ function onFlagMsg(m) {
 
 function onMsg(m) {
   switch (m.t) {
+    case 'needlogin': { rejected = true; const t = 'Dereceli maç için hesapla giriş yapmalısın (Giriş / Kayıt).'; if (VA.hooks.status) VA.hooks.status(t); if (VA.hooks.toast) VA.hooks.toast(t); break; }
     case 'full': case 'busy': case 'noroom': { rejected = true; const t = { full: 'Oda ya da sunucu dolu.', busy: 'Sunucuda boş oda yeri yok, biraz sonra dene.', noroom: 'Bu kodla oda bulunamadı.' }[m.t]; if (VA.hooks.status) VA.hooks.status(t); if (VA.hooks.toast) VA.hooks.toast(t); break; }
     case 'room': ROOM = m; syncPauseUi(); { const rt = $('roomtag'); if (rt) { rt.textContent = 'ODA ' + m.code + (m.priv ? ' (özel)' : ''); rt.style.display = ''; } } feed('Oda <b>' + esc(m.code) + '</b>' + (m.priv ? ' &middot; özel: kodu arkadaşlarınla paylaş' : '')); break;
     case 'init':

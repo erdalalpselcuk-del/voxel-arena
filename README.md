@@ -112,3 +112,9 @@ Sürekli açık kalma için bkz. **DEPLOY.md** (Fly.io, VPS + systemd + Caddy, R
 - **Gençbay #17 seti**: forma numarası 17 (Sarı/Lacivert/Kırmızı/Özel), Basket Bandı (şapka), Basket Topu (sırt). Oyuncu adı `gencbaayy` olan hesaba (2 kademe) toplam 10000 elmas, 125000 PX, 8 altın kasa, tüm set ve 5 Gençbay silah koleksiyonu verilir (`profile.js` → `VIP`).
 - Oyuncu adı `Erdal` veya `Erdal Alp Selçuk` olan hesaba aynı paket verilir.
 - **Telefon dikey menü**: ikonlu sekmeler, tam genişlik OYNA, mod/harita satırı, Dolap/Mağazada karakter önizlemesi üstte.
+
+## Hesap sistemi, dereceli maç, yeni modlar
+- **Giriş**: Kullanıcı adı + parola (scrypt ile saklanır, deneme sınırı var). Oturum jetonu sunucuda üretilir; adı yazmak artık hiçbir ayrıcalık vermez. Misafir olarak da girilebilir (dereceli maç hariç).
+- **Özel hesaplar (yapımcı paketi)**: Sunucuda `VIP_USERS` (varsayılan `erdal,gencbaayy`) adları ayrılmıştır. Bu adlarla kayıt için `VIP_CODE` ortam değişkeni gerekir; ayarlanmazsa bu adlar kaydedilemez. Paket sunucudan gelen onayla verilir.
+- **Rekabetçi 5v5**: 10 kişilik takım maçı, yalnız giriş yapmış hesaplar, bot yok, MMR (Bronz/Gümüş/Altın/Platin/Elmas), benzer seviyedekilerle eşleşir. **Büyük Savaş**: 32 kişilik herkes-tek-modu.
+- Yeni kostümler: Gölge Ninja, Astronot, Siber Punk, Samuray, Robot, Korsan Kaptan, Altın Şövalye; Gençbay tek forma (#17).

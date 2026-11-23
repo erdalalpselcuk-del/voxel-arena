@@ -77,3 +77,6 @@ Verilen `https://....trycloudflare.com` adresini arkadaşlarınla paylaş. Bilgi
 - **Sağlık kontrolü:** `/healthz` ayakta olup olmadığını, oda ve oyuncu sayısını verir. UptimeRobot gibi bir servisle izleyebilirsin.
 - **Tek sunucu:** Tüm oyuncular tek süreçte durur. 16 kişilik odalarla yüzlerce eşzamanlı oyuncuya yeter. Çok daha büyük için lobi ve oyun sunucuları ayrılmalı.
 - **Hile koruması yok:** Ekonomi istemci tarafında. Ciddi bir herkese açık yayın için ödüllerin sunucuda hesaplanması gerekir.
+
+## Özel hesap kodu
+Render > Environment: `VIP_CODE` = sadece senin bildiğin uzun bir kod (ör. 20 karakter). İsteğe bağlı `VIP_USERS=erdal,gencbaayy`. Oyunda KAYIT sekmesinde kullanıcı adı `erdal`, parolanı ve bu kodu girerek hesabı bir kez oluşturursun.

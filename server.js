@@ -13,7 +13,7 @@ const STARTED = Date.now();
 
 const PORT = process.env.PORT || 3000;
 const MIN_PLAYERS = +(process.env.MIN_PLAYERS || 4); // herkese açık odalarda botlarla doldurulan toplam oyuncu (0 = bot yok)
-const MAX_PLAYERS = 16, MAX_ROOMS = +(process.env.MAX_ROOMS || 40), MAX_PER_IP = +(process.env.MAX_PER_IP || 8);
+const MAX_PLAYERS = 32, MAX_ROOMS = +(process.env.MAX_ROOMS || 40), MAX_PER_IP = +(process.env.MAX_PER_IP || 8);
 const EMPTY_MS = 30000; // son insan çıkınca oda bu kadar sonra kapanır
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css', '.png': 'image/png', '.ico': 'image/x-icon', '.svg': 'image/svg+xml', '.json': 'application/json' };
 const PUBLIC = path.join(__dirname, 'public');
@@ -32,37 +32,40 @@ function createRoom(opt) {
     code, priv: !!opt.priv, host: 0, sockets, emptyAt: 0, born: Date.now(),
     game: new Game({
       rotate: !mode, allowHeavy: false, mode: mode || MODE_ORDER[Math.floor(Math.random() * MODE_ORDER.length)],
+      onEnd: (res) => { for (const q of res.players) lobby.rankResult(q.uid, q.team === res.win, q.kills); },
       send: (id, obj) => { const ws = sockets.get(id); if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj)); },
       broadcast: (obj, skip) => { const s = JSON.stringify(obj); for (const [id, ws] of sockets) if (id !== skip && ws.readyState === 1) ws.send(s); },
     }),
   };
   room.fixedMode = mode;
-  room.game.fillBots(cl(opt.bots, 0, MAX_PLAYERS, MIN_PLAYERS));
+  room.game.fillBots(mode && MODES[mode].ranked ? 0 : cl(opt.bots, 0, room.game.cap(), Math.min(MIN_PLAYERS, room.game.cap())));
   rooms.set(code, room);
   return room;
 }
 
-const roomInfo = (r) => ({ code: r.code, priv: r.priv, mode: r.game.modeKey, modeName: r.game.mode().name, fixed: !!r.fixedMode, n: r.game.humans(), max: MAX_PLAYERS, bots: r.game.players.size - r.game.humans() });
-const joinable = (r) => r.game.humans() < MAX_PLAYERS;
+const roomInfo = (r) => ({ code: r.code, priv: r.priv, mode: r.game.modeKey, modeName: r.game.mode().name, fixed: !!r.fixedMode, n: r.game.humans(), max: r.game.cap(), ranked: !!r.game.mode().ranked, bots: r.game.players.size - r.game.humans() });
+const joinable = (r) => r.game.humans() < r.game.cap();
+const avgMmr = (r) => { let n = 0, t = 0; for (const p of r.game.players.values()) if (p.human && p.mmr) { n++; t += p.mmr; } return n ? t / n : 0; };
 
-function quickRoom(wantMode, real) { // real: gerçek oyuncu ara; hiç oyuncu yoksa botsuz oda açar, bot dolgusu gerçek oyuncu geldikçe zaten çekilir
+function quickRoom(wantMode, real, mmr) { // real: gerçek oyuncu ara; hiç oyuncu yoksa botsuz oda açar, bot dolgusu gerçek oyuncu geldikçe zaten çekilir
   let best = null;
   for (const r of rooms.values()) {
     if (r.priv || !joinable(r)) continue;
     if (isMode(wantMode) && r.game.modeKey !== wantMode) continue;
+    if (MODES[r.game.modeKey].ranked && mmr && avgMmr(r) && Math.abs(avgMmr(r) - mmr) > 350) continue; // dereceli: benzer seviyedekilerle eşleş
     if (!best || r.game.humans() > best.game.humans()) best = r; // en dolu odayı tercih et
   }
   return best || createRoom({ mode: isMode(wantMode) ? wantMode : null, bots: real ? 0 : MIN_PLAYERS });
 }
 
-function resolveRoom(msg, ip) {
+function resolveRoom(msg, ip, mmr) {
   const req = (msg && typeof msg.room === 'object' && msg.room) || {};
   if (req.kind === 'code') {
     const r = rooms.get(String(req.code || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4));
     return r ? (joinable(r) ? r : 'full') : 'noroom';
   }
   if (req.kind === 'create') return createRoom({ mode: req.mode, bots: req.bots, priv: !!req.priv }) || 'busy';
-  return quickRoom(typeof req.mode === 'string' ? req.mode : '', !!req.real) || 'busy';
+  return quickRoom(typeof req.mode === 'string' ? req.mode : '', !!req.real, mmr) || 'busy';
 }
 
 const json = (res, code, obj) => { res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(obj)); };
@@ -103,14 +106,15 @@ wss.on('connection', (ws, req) => {
     if (!msg || typeof msg.t !== 'string') return;
     if (!room) {
       if (msg.t !== 'join') return;
-      const r = resolveRoom(msg, ip);
+      const acc = lobby.verify(msg.tok), r = resolveRoom(msg, ip, acc ? acc.mmr : 0);
+      if (typeof r !== 'string' && MODES[r.game.modeKey].ranked && !acc) { ws.send(JSON.stringify({ t: 'needlogin' })); return ws.close(); } // dereceli maç için hesap şart
       if (typeof r === 'string') { ws.send(JSON.stringify({ t: r })); return ws.close(); } // noroom | full | busy
       const g = r.game, tmp = g.nextId; // addPlayer id'yi kendisi atar; soket önce kaydedilmeli
       r.sockets.set(tmp, ws);
       const cid = String(msg.cid || '').slice(0, 40); // aynı sekmeden yeniden girişte eski (hayalet) oyuncuyu hemen temizle
       if (cid) for (const rr of rooms.values()) for (const q of [...rr.game.players.values()]) if (q.human && q.cid === cid) { const os = rr.sockets.get(q.id); rr.sockets.delete(q.id); rr.game.removePlayer(q.id); if (rr.host === q.id) rr.host = [...rr.sockets.keys()][0] || 0; if (os) { try { os.terminate(); } catch (e) {} } }
       const p = g.addPlayer(msg, true);
-      if (p) p.cid = cid;
+      if (p) { p.cid = cid; if (acc) { p.uid = acc.uid; p.mmr = acc.mmr; } }
       if (!p) { r.sockets.delete(tmp); ws.send(JSON.stringify({ t: 'full' })); return ws.close(); }
       room = r; id = p.id; r.emptyAt = 0;
       if (!r.host) r.host = id;

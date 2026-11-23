@@ -17,6 +17,52 @@ const num = (v, hi) => (typeof v === 'number' && isFinite(v) ? Math.max(0, Math.
 const send = (ws, o) => { if (ws.readyState === 1) ws.send(JSON.stringify(o)); };
 const score = (st) => (st ? st.xp * 2 + st.kills * 10 + st.wins * 50 : 0);
 
+
+// ---- hesap sistemi: kullanıcı adı + parola (scrypt). Oturum jetonu sunucuda üretilir, yalnızca özeti saklanır ----
+const crypto = require('crypto');
+const VIP_USERS = (process.env.VIP_USERS || 'erdal,gencbaayy').toLowerCase().split(',').map((s) => s.trim()).filter(Boolean);
+const VIP_CODE = process.env.VIP_CODE || ''; // ayrılmış adlarla kayıt için gizli kod (boşsa o adlar kaydedilemez)
+const VIP_LEVEL = 2;
+const vipLevel = (acct) => (acct && VIP_USERS.indexOf(String(acct).toLowerCase()) >= 0 ? VIP_LEVEL : 0);
+const userOk = (s) => /^[A-Za-z0-9_çğıöşüÇĞİÖŞÜ.-]{3,16}$/.test(s);
+const hashPw = (pw, salt) => crypto.scryptSync(String(pw), salt, 32).toString('hex');
+const attempts = new Map(); // ip|kullanıcı -> {n, t}
+function tooMany(key) { const now = Date.now(), a = attempts.get(key); if (!a || now - a.t > 600000) { attempts.set(key, { n: 1, t: now }); return false; } a.n++; return a.n > 8; }
+function newSession(uid) { const tok = crypto.randomBytes(24).toString('hex'); db.sess[store.idOf(tok)] = uid; return tok; }
+const rankName = (m) => (m < 900 ? 'Bronz' : m < 1100 ? 'Gümüş' : m < 1300 ? 'Altın' : m < 1500 ? 'Platin' : 'Elmas');
+function verify(tok) { // oyun odasına gelen oturum jetonunu doğrula (yalnızca giriş yapmış hesaplar)
+  tok = String(tok || ''); if (tok.length < 16 || tok.length > 80) return null;
+  const uid = db.sess[store.idOf(tok)], u = uid && db.users[uid]; if (!u) return null;
+  return { uid, mmr: u.mmr || 1000 };
+}
+function rankResult(uid, won, kills) {
+  const u = db.users[uid]; if (!u) return;
+  const old = u.mmr || 1000, d = won ? 24 + Math.min(8, kills) : -(18 - Math.min(8, kills >> 1));
+  u.mmr = Math.max(100, old + d); u.rm = (u.rm | 0) + 1; if (won) u.rw = (u.rw | 0) + 1; store.touch();
+  const x = conns.get(uid); if (x) send(x.ws, { t: 'mmr', mmr: u.mmr, d, rank: rankName(u.mmr) });
+}
+function authMsg(ctx, msg) {
+  const { ws } = ctx, user = clean(msg.user, 16), pw = String(msg.pass == null ? '' : msg.pass), key = user.toLowerCase();
+  if (tooMany(ctx.ip + '|' + msg.t) || tooMany('u|' + key)) return send(ws, { t: 'autherr', m: 'Çok fazla deneme. 10 dakika sonra tekrar dene.' });
+  if (!userOk(user)) return send(ws, { t: 'autherr', m: 'Kullanıcı adı 3-16 harf/rakam olmalı (boşluk yok)' });
+  if (pw.length < 6 || pw.length > 64) return send(ws, { t: 'autherr', m: 'Parola 6-64 karakter olmalı' });
+  if (msg.t === 'reg') {
+    if (db.accts[key]) return send(ws, { t: 'autherr', m: 'Bu kullanıcı adı alınmış' });
+    if (VIP_USERS.indexOf(key) >= 0 && (!VIP_CODE || String(msg.code || '') !== VIP_CODE)) return send(ws, { t: 'autherr', m: 'Bu ad ayrılmış (kayıt kodu gerekli)' });
+    const salt = crypto.randomBytes(16).toString('hex'), uid = 'a' + crypto.randomBytes(11).toString('hex');
+    db.accts[key] = { name: user, salt, hash: hashPw(pw, salt), uid, created: Date.now() };
+    // misafir ilerlemesini taşı: o anki bağlantının kullanıcı kaydı yeni hesaba kopyalanır
+    const g = ctx.uid && db.users[ctx.uid];
+    db.users[uid] = { id: uid, name: user, created: Date.now(), rev: g ? g.rev : 0, profile: g ? g.profile : null, stats: g ? g.stats : null, club: '' };
+  } else {
+    const a = db.accts[key]; if (!a) return send(ws, { t: 'autherr', m: 'Kullanıcı bulunamadı' });
+    const h = Buffer.from(hashPw(pw, a.salt), 'hex'), ok = Buffer.from(a.hash, 'hex');
+    if (h.length !== ok.length || !crypto.timingSafeEqual(h, ok)) return send(ws, { t: 'autherr', m: 'Parola yanlış' });
+  }
+  const a = db.accts[key]; store.touch();
+  send(ws, { t: 'auth', token: newSession(a.uid), user: a.name, reg: msg.t === 'reg' ? 1 : 0 });
+}
+
 let gameCount = () => 0; // server.js bağlar: oyun içindeki gerçek oyuncu sayısı
 
 function clubLevel(c) { let xp = 0; for (const id of c.members) { const u = db.users[id]; if (u && u.stats) xp += u.stats.xp; } return 1 + Math.floor(xp / 3000); }
@@ -53,10 +99,12 @@ function leaderboard() {
 function onMessage(ctx, msg) {
   const { ws } = ctx;
   if (!msg || typeof msg.t !== 'string') return;
+  if (msg.t === 'reg' || msg.t === 'login') return authMsg(ctx, msg);
   if (msg.t === 'hello') {
     if (ctx.uid) return;
     const token = String(msg.token || ''); if (token.length < 16 || token.length > 80) return ws.close();
-    const uid = store.idOf(token);
+    const tid = store.idOf(token), uid = db.sess[tid] || tid;
+    ctx.acct = db.sess[tid] ? (Object.values(db.accts).find((a) => a.uid === uid) || {}).name || '' : '';
     const old = conns.get(uid); if (old && old.ws !== ws) { send(old.ws, { t: 'kicked' }); old.ws.close(); }
     let u = db.users[uid];
     if (!u) { u = db.users[uid] = { id: uid, name: '', created: Date.now(), rev: 0, profile: null, stats: null, club: '' }; }
@@ -64,7 +112,7 @@ function onMessage(ctx, msg) {
     ctx.uid = uid; conns.set(uid, ctx); store.touch();
     if (u.club && !db.clubs[u.club]) u.club = '';
     const clientRev = num(msg.rev, 9e15);
-    send(ws, { t: 'welcome', id: uid, name: u.name, rev: u.rev, profile: u.profile && u.rev > clientRev ? u.profile : null, club: clubPub(u.club), members: u.club ? members(u.club) : [], chat: globalChat.slice(-40), cchat: u.club ? (clubChat.get(u.club) || []).slice(-30) : [], ...onlineInfo() });
+    send(ws, { t: 'welcome', id: uid, name: u.name, acct: ctx.acct || '', vip: vipLevel(ctx.acct), mmr: u.mmr || 1000, rank: rankName(u.mmr || 1000), rm: u.rm | 0, rw: u.rw | 0, rev: u.rev, profile: u.profile && u.rev > clientRev ? u.profile : null, club: clubPub(u.club), members: u.club ? members(u.club) : [], chat: globalChat.slice(-40), cchat: u.club ? (clubChat.get(u.club) || []).slice(-30) : [], ...onlineInfo() });
     scheduleOnline();
     if (u.club) pushClub(u.club);
     return;
@@ -123,7 +171,7 @@ wss.on('connection', (ws, req) => {
   const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').toString().split(',')[0].trim();
   if ((perIp.get(ip) || 0) >= MAX_PER_IP) { ws.close(); return; }
   perIp.set(ip, (perIp.get(ip) || 0) + 1);
-  const ctx = { ws, uid: '', lastChat: 0, win: Date.now(), n: 0, alive: true, born: Date.now() };
+  const ctx = { ip, acct: '', ws, uid: '', lastChat: 0, win: Date.now(), n: 0, alive: true, born: Date.now() };
   ws._ctx = ctx;
   ws.on('pong', () => { ctx.alive = true; });
   ws.on('message', (raw) => {
@@ -141,4 +189,4 @@ wss.on('connection', (ws, req) => {
 // bağlantı kopukluğunu ve boşta kalan proxy zaman aşımlarını yakalamak için canlılık sinyali
 setInterval(() => { for (const c of wss.clients) { const x = c._ctx; if (!x) continue; if (!x.alive || (!x.uid && Date.now() - x.born > 15000)) { c.terminate(); continue; } x.alive = false; try { c.ping(); } catch (e) {} } }, 25000).unref();
 
-module.exports = { wss, onlineInfo, setGameCount: (f) => { gameCount = f; }, stats: () => ({ users: Object.keys(db.users).length, clubs: Object.keys(db.clubs).length, lobby: conns.size }) };
+module.exports = { verify, rankResult, wss, onlineInfo, setGameCount: (f) => { gameCount = f; }, stats: () => ({ users: Object.keys(db.users).length, clubs: Object.keys(db.clubs).length, lobby: conns.size }) };

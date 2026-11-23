@@ -8,11 +8,14 @@
     kc: { key: 'kc', name: 'Kill Confirmed', win: 15, label: 'Künye' },
     ffa: { key: 'ffa', name: 'Herkes Tek', win: 20, label: 'Öldürme' },
     rocket: { key: 'rocket', name: 'Roket Arenası', win: 15, label: 'Öldürme' },
-    tdm: { key: 'tdm', name: 'Takım Savaşı', win: 30, label: 'Takım', team: true },
+    tdm: { key: 'tdm', name: 'Takım Savaşı', win: 30, label: 'Takım', team: true, tk: true },
     ctf: { key: 'ctf', name: 'Bayrak Kapmaca', win: 3, label: 'Bayrak', team: true },
+    comp: { key: 'comp', name: 'Rekabetçi 5v5', win: 40, label: 'Takım', team: true, tk: true, max: 10, ranked: true },
+    big: { key: 'big', name: 'Büyük Savaş (32)', win: 40, label: 'Öldürme', max: 32 },
     zom: { key: 'zom', name: 'Zombi Dalgası', win: 6, label: 'Dalga', team: true, coop: true },
   };
   const MODE_ORDER = ['kc', 'ffa', 'rocket', 'tdm', 'ctf', 'zom'];
+  const MODE_LIST = MODE_ORDER.concat(['comp', 'big']); // seçilebilir modlar (comp/big dönen odalarda çıkmaz)
   const TEAM_NAMES = ['Mavi', 'Kırmızı'];
   const BOT_NAMES = ['Kaplan', 'Şahin', 'Pixel', 'Blok', 'Zıpzıp', 'Gölge', 'Cesur', 'Tilki', 'Bulut', 'Kuzgun', 'Çakıl', 'Yıldız'];
   const RESPAWN_MS = 3000, TAG_LIFE = 25000, LOOT_LIFE = 30000, LOOT_MAX = 24, PICKUP_RESPAWN = 20000, MAX_PLAYERS = 16;
@@ -33,7 +36,7 @@
   function Game(opts) {
     this.send = opts.send;
     this.broadcast = opts.broadcast;
-    this.rotate = !!opts.rotate;
+    this.rotate = !!opts.rotate; this.onEnd = opts.onEnd || null;
     this.modeKey = opts.mode || 'kc';
     this.themeIdx = opts.theme == null ? Math.floor(Math.random() * VM.THEMES.length) : opts.theme;
     this.players = new Map();
@@ -50,6 +53,7 @@
   }
   const G = Game.prototype;
   G.mode = function () { return MODES[this.modeKey]; };
+  G.cap = function () { return Math.min(32, MODES[this.modeKey].max || MAX_PLAYERS); };
   G.isTeam = function () { return !!MODES[this.modeKey].team; };
   G.pickTeam = function (want) {
     const n = [0, 0]; for (const q of this.players.values()) n[q.team | 0]++;
@@ -149,11 +153,11 @@
   G.humans = function () { let n = 0; for (const p of this.players.values()) if (p.human) n++; return n; };
 
   G.addPlayer = function (info, human) {
-    if (this.players.size >= MAX_PLAYERS && human) {
+    if (this.players.size >= this.cap() && human) {
       const bot = [...this.players.values()].find((q) => !q.human);
       if (bot) this.removePlayer(bot.id);
     }
-    if (this.players.size >= MAX_PLAYERS) return null;
+    if (this.players.size >= this.cap()) return null;
     const p = { id: this.nextId++, name: String(info.name || 'Oyuncu').replace(/[<>&"'`]/g, '').trim().slice(0, 16) || 'Oyuncu', color: clamp(info.color | 0, 0, 11, 0), hat: clamp(info.hat | 0, 0, 40, 0), skin: clamp(info.skin | 0, 0, 40, 0), back: clamp(info.back | 0, 0, 30, 0), pref: this.cleanLoadout(info.loadout), team: this.modeKey === 'zom' ? (human ? 0 : 1) : this.pickTeam(info.team), up: this.cleanUp(info.up), cl: clamp(info.coll | 0, 0, COLL_N - 1, 0),
       pos: [0, 0, 0], yaw: 0, pitch: 0, hp: 100, armor: 0, alive: true, w: 2, owned: [0, 1, 2], gren: 2, score: 0, kills: 0, deaths: 0, nextFire: 0, nextNade: 0, lastT: 0, crouch: false, human, joined: true,
       vy: 0, strafe: 1, strafeT: 0, goal: null, goalT: 0, seen: 0, stuck: 0, lastPos: null };
@@ -226,7 +230,7 @@
       this.broadcast({ t: 'tag', id, p: tag.p, owner: tag.owner });
     } else if (!self) {
       killer.score++;
-      if (this.modeKey === 'tdm') { this.tscore[killer.team | 0]++; if (this.tscore[killer.team | 0] >= this.mode().win) this.endRound(killer); }
+      if (this.mode().tk) { this.tscore[killer.team | 0]++; if (this.tscore[killer.team | 0] >= this.mode().win) this.endRound(killer); }
       else if (this.modeKey !== 'ctf' && this.modeKey !== 'zom' && killer.score >= this.mode().win) this.endRound(killer);
     }
     this.dropLoot(v);
@@ -248,6 +252,7 @@
     this.roundOver = true;
     const zom = forced != null, tm = zom ? forced : this.isTeam() ? winner.team | 0 : -1;
     const nm = zom ? (forced === 0 ? 'Hayatta kalanlar' : 'Zombiler') : tm >= 0 ? TEAM_NAMES[tm] + ' takım' : winner.name;
+    if (this.onEnd && this.mode().ranked && tm >= 0) { try { this.onEnd({ win: tm, players: [...this.players.values()].filter((q) => q.human && q.uid).map((q) => ({ uid: q.uid, team: q.team | 0, kills: q.kills | 0, deaths: q.deaths | 0 })) }); } catch (e) { console.error('[onEnd]', e.message); } }
     this.broadcast({ t: 'win', id: winner ? winner.id : 0, name: nm, team: tm, ts: this.tscore, zw: this.zw ? this.zw.n : 0 });
     setTimeout(() => {
       const prevMode = this.modeKey;
@@ -734,7 +739,7 @@
     });
   };
 
-  const api = { Game, MODES, MODE_ORDER };
+  const api = { Game, MODES, MODE_ORDER, MODE_LIST };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.VGame = api;
 })(typeof self !== 'undefined' ? self : this);

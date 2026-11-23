@@ -3,7 +3,7 @@
 (function (root) {
   'use strict';
   const PR = root.VProfile, LOCAL = !!root.LOCAL_BUILD;
-  const S = { status: 'off', id: '', lobby: 0, game: 0, club: null, members: [], chat: [], cchat: [], who: null, lb: null, clubs: null, err: '' };
+  const S = { status: 'off', id: '', lobby: 0, game: 0, club: null, members: [], chat: [], cchat: [], who: null, acct: '', vip: 0, mmr: 1000, rank: 'Altın', rm: 0, rw: 0, dmmr: 0, authErr: '', lb: null, clubs: null, err: '' };
   const subs = [];
   let ws = null, tries = 0, rt = null, saveT = null, hbT = null, wantUrl = '', gen = 0, helloOk = false;
 
@@ -64,7 +64,8 @@
         S.chat = (m.chat || []).map(mark); S.cchat = (m.cchat || []).map(mark); S.members = m.members || [];
         let imported = false;
         if (m.profile) imported = PR.importCloud(m.profile, m.rev);
-        applyClub(m.club);
+        S.acct = m.acct || ''; S.vip = m.vip | 0; S.mmr = m.mmr | 0; S.rank = m.rank || ''; S.rm = m.rm | 0; S.rw = m.rw | 0; applyClub(m.club);
+        if (S.vip && PR.applyVip && PR.applyVip(S.vip)) { imported = true; flushSave(); }
         if (!imported) flushSave(); // yerel kayıt sunucudakinden yeni/eşit: sunucuya yaz
         else if (PR.data.name == null || !PR.data.name.trim()) { /* ad boşsa lobi atar */ }
         badge(); emit('welcome', { imported }); if (imported) emit('profile'); break;
@@ -78,6 +79,9 @@
       case 'club': applyClub(m.club); S.members = m.members || []; if (m.cchat) S.cchat = m.cchat.map(mark); emit('club'); break;
       case 'err': S.err = m.m || ''; emit('err', S.err); break;
       case 'saved': emit('saved'); break;
+      case 'auth': { lsSet('va_token', m.token); S.authErr = ''; if (!m.reg) PR.data.rev = 0; if (m.user) { PR.data.name = m.user; try { localStorage.setItem('va_prof2', JSON.stringify(PR.data)); } catch (e) {} } S.status = 'off'; tries = 0; refresh(); emit('auth', m.user); break; }
+      case 'mmr': S.mmr = m.mmr; S.rank = m.rank; S.dmmr = m.d; emit('mmr', m); break;
+      case 'autherr': S.authErr = m.m || 'Hata'; emit('autherr', S.authErr); break;
       case 'kicked': S.status = 'kicked'; badge(); emit('status'); break;
     }
   }
@@ -114,6 +118,10 @@
       try { localStorage.setItem('va_prof2', JSON.stringify(PR.data)); } catch (e) {}
       S.status = 'off'; refresh(); return true;
     },
+    register(user, pass, code) { S.authErr = ''; send({ t: 'reg', user, pass, code }); },
+    login(user, pass) { S.authErr = ''; send({ t: 'login', user, pass }); },
+    logout() { lsSet('va_token', ''); try { localStorage.removeItem('va_token'); } catch (e) {} S.acct = ''; S.vip = 0; S.status = 'off'; tries = 0; refresh(); emit('auth', ''); },
+    get ready() { return !!ws && ws.readyState === 1; },
     reconnect() { S.status = 'off'; tries = 0; refresh(); },
     chat(room, text) { if (!open()) return false; send({ t: 'chat', room: room === 'club' ? 'club' : 'global', text }); return true; },
     lb() { send({ t: 'lb' }); }, who() { send({ t: 'who' }); }, clubs() { send({ t: 'clubs' }); }, clubInfo() { send({ t: 'club.info' }); },

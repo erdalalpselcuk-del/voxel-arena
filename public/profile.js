@@ -21,12 +21,16 @@
     { name: 'Kral', head: 0xf1c27d, eye: 0x111111, pattern: 'royal' },
     { name: 'Gökkuşağı', head: 0xf1c27d, eye: 0x111111, pattern: 'rainbow' },
     { name: 'Galaksi', head: 0x2b1b4d, eye: 0xffffff, pattern: 'galaxy' },
-    { name: 'Gençbay Sarı #17', head: 0xd9a066, eye: 0x111111, pattern: 'jersey', jc: [0xffd23f, 0x14213d], jn: 'GENÇBAY', num: '17' },
-    { name: 'Gençbay Lacivert #17', head: 0xd9a066, eye: 0x111111, pattern: 'jersey', jc: [0x14213d, 0xffd23f], jn: 'GENÇBAY', num: '17' },
-    { name: 'Gençbay Kırmızı #17', head: 0xd9a066, eye: 0x111111, pattern: 'jersey', jc: [0xd32f2f, 0xffffff], jn: 'GENÇBAY', num: '17' },
+    { name: 'Gençbay #17', head: 0xd9a066, eye: 0x111111, pattern: 'jersey', jc: [0xffd23f, 0x14213d], jn: 'GENÇBAY', num: '17' },
+    { name: 'Gölge Ninja', head: 0xd9a066, eye: 0x111111, pattern: 'suit', s: { b: 0x15151c, t: 0xc62828, m: 'ninja' } },
+    { name: 'Astronot', head: 0xd9a066, eye: 0x111111, pattern: 'suit', s: { b: 0xeeeeee, t: 0xff7a00, m: 'visor', v: 0xffb300 } },
     { name: 'Yapımcı Kral', head: 0xf1c27d, eye: 0x111111, pattern: 'maker' },
     { name: 'Ateş Ruhu', head: 0x2a0d08, eye: 0xff8a00, pattern: 'flame' },
-    { name: 'Gençbay Özel #17', head: 0xd9a066, eye: 0x111111, pattern: 'jersey', jc: [0x111111, 0xffc107], jn: 'GENÇBAY', num: '17' },
+    { name: 'Siber Punk', head: 0xd9a066, eye: 0x111111, pattern: 'suit', s: { b: 0x1a1030, t: 0x00e5ff, m: 'visor', v: 0x00e5ff, glow: 1 } },
+    { name: 'Samuray', head: 0xd9a066, eye: 0x111111, pattern: 'suit', s: { b: 0x7a1d1d, t: 0xd4af37, m: 'kabuto' } },
+    { name: 'Robot', head: 0x8a9099, eye: 0x35e0ff, pattern: 'suit', s: { b: 0x8a9099, t: 0x35e0ff, m: 'robot', glow: 1 } },
+    { name: 'Korsan Kaptan', head: 0xd9a066, eye: 0x111111, pattern: 'suit', s: { b: 0x3a2a1a, t: 0xd4af37, m: 'pirate' } },
+    { name: 'Altın Şövalye', head: 0xd9a066, eye: 0x111111, pattern: 'suit', s: { b: 0xd4af37, t: 0xffffff, m: 'knight' } },
   ];
   const HATS = ['Şapkasız', 'Kep', 'Taç', 'Miğfer', 'Anten', 'Boynuz', 'Kovboy', 'Silindir', 'Halka', 'Korsan', 'Cadı', 'Aşçı', 'Noel', 'Mohawk', 'Baret', 'Şövalye Miğferi', 'Alev', 'Kral Tacı', 'Ördek', 'Kulaklık', 'Siber Vizör', 'Mantar', 'Elmas Taç', 'Basket Bandı'];
   const BACKS = ['Yok', 'Sırt Çantası', 'Pelerin', 'Kanatlar', 'Jetpack', 'Kılıç', 'Ok Kılıfı', 'Kalkan', 'Şeytan Kanatları', 'Dalgıç Tüpü', 'Gitar', 'Gökkuşağı Pelerin', 'Roket Çantası', 'Altın Kanatlar', 'Basket Topu'];
@@ -43,7 +47,7 @@
   const spec = (list, prices) => list.map((o, i) => Object.assign({ id: i }, o, prices[i] || px(0)));
   const CATALOG = {
     color: COLORS.map((c, i) => Object.assign({ id: i, name: COLOR_NAMES[i], hex: c }, i < 6 ? px(0) : px(100 + (i - 6) * 30))),
-    skin: spec(SKINS.map((x) => ({ name: x.name })), [px(0), px(400), px(600), px(500), gem(25), gem(60), px(700), px(650), gem(40), px(800), px(750), px(600), pass(3), pass(2), px(900), pass(3), pass(3), pass(3), gem(40), gem(40), px(1500), gem(150), gem(90), gem(120)]),
+    skin: spec(SKINS.map((x) => ({ name: x.name })), [px(0), px(400), px(600), px(500), gem(25), gem(60), px(700), px(650), gem(40), px(800), px(750), px(600), pass(3), pass(2), px(900), pass(3), pass(3), pass(3), gem(120), px(1200), px(1500), gem(150), gem(90), gem(110), gem(100), px(1800), px(1400), gem(160)]),
     hat: spec(HATS.map((n) => ({ name: n })), [px(0), px(150), gem(20), px(250), px(100), px(300), px(350), px(400), gem(15), px(300), px(350), px(200), px(250), px(300), px(200), px(500), pass(3), pass(3), px(400), px(350), pass(2), px(450), pass(3), px(900)]),
     back: spec(BACKS.map((n) => ({ name: n })), [px(0), px(200), px(350), gem(30), px(500), px(250), px(300), px(350), pass(2), px(400), px(450), pass(3), pass(2), pass(3), px(1000)]),
     gskin: GSKINS.map((x, i) => Object.assign({ id: i, name: x.name, hex: x.color }, [px(0), px(300), px(300), px(400), gem(40), px(300), px(300), px(300), px(350), px(350), pass(2), px(400), gem(35), px(400), px(400), pass(3), pass(3)][i])),
@@ -97,31 +101,23 @@
     if (!P.mis || P.mis.day !== day()) P.mis = { day: day(), prog: {}, claimed: {} };
     return P;
   }
-  // özel hesap: 'gencbaayy' adıyla bir kez elmas/PX ve tüm Gençbay seti verilir
-  const VIP = { gencbaayy: [
-    { gems: 2000, px: 25000, skin: [18, 19, 20, 21, 22, 23], hat: [23], back: [14], coll: [], gold: 3 },
+  // sunucunun onayladığı özel hesap paketi (yalnızca lobi sunucusu 'welcome' içinde vip seviyesi verirse uygulanır)
+  const VIP_TIERS = [
+    { gems: 2000, px: 25000, skin: [18, 19, 20, 21, 22, 23, 24, 25, 26, 27], hat: [23], back: [14], coll: [], gold: 3 },
     { gems: 8000, px: 100000, skin: [], hat: [], back: [], coll: [22, 23, 24, 25, 26], gold: 5, equipColl: 22 },
-  ] };
-  const GB = VIP.gencbaayy;
-  const ERDAL = [{ gems: 10000, px: 125000, skin: [18, 19, 20, 21, 22, 23], hat: [23], back: [14], coll: [22, 23, 24, 25, 26], gold: 8, equipSkin: 21, equipColl: 22 }];
-  VIP.erdal = ERDAL; VIP['erdal alp selçuk'] = ERDAL; VIP['erdal alp selcuk'] = ERDAL;
-  function perks() {
-    const k = String(P.name || '').trim().toLowerCase(), L = VIP[k];
-    if (!L) return;
-    P.perks = P.perks || {};
-    const have = P.perks[k] | 0;
-    if (have >= L.length) return;
-    for (let i = have; i < L.length; i++) {
-      const v = L[i];
+  ];
+  function applyVip(level) {
+    level = Math.min(level | 0, VIP_TIERS.length); const have = P.vip | 0; if (level <= have) return false;
+    for (let i = have; i < level; i++) {
+      const v = VIP_TIERS[i];
       P.gems += v.gems; P.px += v.px; P.crates.gold = (P.crates.gold || 0) + v.gold;
       for (const t of ['skin', 'hat', 'back', 'coll']) for (const id of v[t]) if (P.owned[t].indexOf(id) < 0) P.owned[t].push(id);
-      if (i === 0) { P.equip.skin = 23; P.equip.hat = 23; P.equip.back = 14; }
-      if (v.equipSkin) P.equip.skin = v.equipSkin;
+      if (i === 0) { P.equip.skin = 18; P.equip.hat = 23; P.equip.back = 14; }
       if (v.equipColl) P.equip.coll = v.equipColl;
     }
-    P.perks[k] = L.length;
+    P.vip = level; save(); return true;
   }
-  function save() { perks(); P.rev = Date.now(); try { localStorage.setItem('va_prof2', JSON.stringify(P)); } catch (e) {} if (saveHook) { try { saveHook(); } catch (e) {} } }
+  function save() { P.rev = Date.now(); try { localStorage.setItem('va_prof2', JSON.stringify(P)); } catch (e) {} if (saveHook) { try { saveHook(); } catch (e) {} } }
   // bulut: sunucudaki kayıt daha yeniyse yerel profilin yerine geçer (kanca tetiklenmez)
   function importCloud(raw, rev) {
     if (!raw || typeof raw !== 'object') return false;
@@ -325,6 +321,6 @@
   }
 
   load();
-  const api = { seasonInfo, normPass, rewardRarity, QUESTS, questState, claimQuest, buyTier, TIER_COST, PREMIUM_COST, RAR_NAMES, RAR_COLORS, rarityOf, CRATES, buyCrate, openCrate, randomItem, PASS_MAX, PASS_XP, passReward, describe, passReached, claimPass, buyPremium, matchEnd, addPassXp, COLORS, COLOR_NAMES, SKINS, HATS, BACKS, GSKINS, WEAPON_NAMES, CATALOG, CLUBS, BOT_NAMES, MISSION_DEFS, get data() { return P; }, save, load, level, levelProgress, addPx, addGems, addXp, owns, item, buy, equip, track, missionState, claimMission, claimBonus, weaponList, joinInfo, UP_MAX, UP_FX, upLevel, upCost, upgrade, clubBonus, importCloud, stats, setHook(f) { saveHook = f; }, reset() { P = fresh(); save(); } };
+  const api = { applyVip, seasonInfo, normPass, rewardRarity, QUESTS, questState, claimQuest, buyTier, TIER_COST, PREMIUM_COST, RAR_NAMES, RAR_COLORS, rarityOf, CRATES, buyCrate, openCrate, randomItem, PASS_MAX, PASS_XP, passReward, describe, passReached, claimPass, buyPremium, matchEnd, addPassXp, COLORS, COLOR_NAMES, SKINS, HATS, BACKS, GSKINS, WEAPON_NAMES, CATALOG, CLUBS, BOT_NAMES, MISSION_DEFS, get data() { return P; }, save, load, level, levelProgress, addPx, addGems, addXp, owns, item, buy, equip, track, missionState, claimMission, claimBonus, weaponList, joinInfo, UP_MAX, UP_FX, upLevel, upCost, upgrade, clubBonus, importCloud, stats, setHook(f) { saveHook = f; }, reset() { P = fresh(); save(); } };
   root.VProfile = api;
 })(typeof self !== 'undefined' ? self : this);

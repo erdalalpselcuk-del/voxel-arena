@@ -9,7 +9,7 @@
   const rnd = (a) => a[Math.floor(Math.random() * a.length)];
   const hex = (n) => '#' + (n >>> 0).toString(16).padStart(6, '0');
 
-  const MODES = [['kc', 'Kill Confirmed'], ['ffa', 'Herkes Tek'], ['rocket', 'Roket Arenası'], ['tdm', 'Takım Savaşı'], ['ctf', 'Bayrak Kapmaca'], ['zom', 'Zombi Dalgası'], ['rnd', 'Rastgele']];
+  const MODES = [['kc', 'Kill Confirmed'], ['ffa', 'Herkes Tek'], ['rocket', 'Roket Arenası'], ['tdm', 'Takım Savaşı'], ['ctf', 'Bayrak Kapmaca'], ['zom', 'Zombi Dalgası'], ['comp', 'Rekabetçi 5v5'], ['big', 'Büyük Savaş (32)'], ['rnd', 'Rastgele']];
   const MAPS = [[-1, 'Rastgele']].concat((VM.THEMES || []).map((t, i) => [i, t.name || ('Harita ' + (i + 1))]));
   const CATS = [['color', 'Renk'], ['skin', 'Karakter'], ['hat', 'Şapka'], ['back', 'Sırt'], ['gskin', 'Silah Kaplama'], ['coll', 'Koleksiyon'], ['weapon', 'Silah']];
   const NAV = [['shop', '\u{1F6D2}', 'Mağaza'], ['crates', '\u{1F4E6}', 'Kasalar'], ['locker', '\u{1F9E5}', 'Dolap'], ['arsenal', '\u{1F52B}', 'Cephanelik'], ['missions', '\u{1F3AF}', 'Görevler'], ['pass', '\u{1F3AB}', 'Sezon Pası'], ['rank', '\u{1F3C6}', 'Sıralama'], ['club', '\u{1F6E1}', 'Kulüp'], ['servers', '\u{1F310}', 'Sunucular'], ['chat', '\u{1F4AC}', 'Sohbet'], ['settings', '⚙', 'Ayarlar']];
@@ -80,6 +80,8 @@
     else if (id === 'ffa') { R(7, 0, 2, 5, '#ff5a4d'); R(7, 11, 2, 5, '#ff5a4d'); R(0, 7, 5, 2, '#ff5a4d'); R(11, 7, 5, 2, '#ff5a4d'); R(7, 7, 2, 2, '#fff'); R(3, 3, 1, 1, '#ff5a4d'); R(12, 3, 1, 1, '#ff5a4d'); R(3, 12, 1, 1, '#ff5a4d'); R(12, 12, 1, 1, '#ff5a4d'); }
     else if (id === 'rocket') { R(6, 3, 4, 8, '#e8e8e8'); R(7, 1, 2, 2, '#e74c3c'); R(6, 3, 4, 1, '#e74c3c'); R(7, 5, 2, 2, '#4fc3f7'); R(4, 8, 2, 4, '#e74c3c'); R(10, 8, 2, 4, '#e74c3c'); R(7, 11, 2, 2, '#ffb000'); R(7, 13, 2, 2, '#ff6a00'); }
     else if (id === 'tdm') { R(2, 2, 6, 10, '#3a7bd5'); R(8, 2, 6, 10, '#e74c3c'); R(2, 1, 12, 1, '#fff'); R(4, 12, 8, 1, '#8aa'); R(6, 13, 4, 1, '#8aa'); R(7, 14, 2, 1, '#8aa'); R(7, 4, 2, 6, '#fff'); }
+    else if (id === 'comp') { R(1, 2, 7, 11, '#3a7bd5'); R(8, 2, 7, 11, '#e74c3c'); R(0, 1, 16, 1, '#ffd23f'); R(0, 13, 16, 1, '#ffd23f'); R(6, 5, 4, 5, '#fff'); R(7, 6, 2, 3, '#ffd23f'); }
+    else if (id === 'big') { for (let i = 0; i < 16; i++) R(1 + (i % 4) * 4, 2 + ((i / 4) | 0) * 3, 2, 2, i % 3 ? '#ff9f0a' : '#e74c3c'); }
     else if (id === 'ctf') { R(3, 1, 1, 14, '#ddd'); R(4, 2, 9, 6, '#e74c3c'); R(4, 2, 9, 1, '#fff'); R(4, 7, 9, 1, '#b02a1e'); R(2, 14, 4, 1, '#888'); }
     else if (id === 'zom') { R(3, 3, 10, 10, '#7fae5a'); R(3, 3, 4, 2, '#5d8a3f'); R(5, 6, 2, 2, '#ff3b30'); R(9, 6, 2, 2, '#ff3b30'); R(5, 10, 6, 1, '#2a3b1c'); R(6, 10, 1, 2, '#e8e8d0'); R(9, 10, 1, 2, '#e8e8d0'); R(2, 6, 1, 3, '#5d8a3f'); }
     else { R(2, 2, 12, 12, '#f5f5f5'); R(2, 2, 12, 1, '#fff'); R(2, 13, 12, 1, '#bbb'); for (const [x, y] of [[4, 4], [11, 4], [7, 7], [4, 10], [11, 10]]) R(x, y, 2, 2, '#222'); }
@@ -153,6 +155,13 @@
     R(7, 13, 10, 8, shirt); R(5, 13, 2, 7, shirt); R(17, 13, 2, 7, shirt); R(5, 19, 2, 2, head); R(17, 19, 2, 2, head);
     R(7, 20, 10, 1, 'rgba(0,0,0,.25)');
     if (sk.pattern === 'jersey') { const m = icoHex(sk.jc[0]), t = icoHex(sk.jc[1]); R(7, 13, 10, 8, m); R(7, 13, 10, 1, t); R(7, 13, 1, 8, t); R(16, 13, 1, 8, t); R(8, 21, 4, 3, m); R(12, 21, 4, 3, m); R(8, 23, 4, 1, t); R(12, 23, 4, 1, t); if (sk.num === '17') { R(9, 15, 1, 5, t); R(8, 16, 1, 1, t); R(11, 15, 4, 1, t); R(14, 16, 1, 1, t); R(13, 17, 1, 1, t); R(12, 18, 1, 2, t); } else { R(10, 15, 4, 1, t); R(10, 16, 1, 1, t); R(13, 16, 1, 1, t); R(10, 17, 4, 1, t); R(13, 18, 1, 1, t); R(10, 19, 4, 1, t); } }
+    if (sk.pattern === 'suit') { const q = sk.s, B = icoHex(q.b), T = icoHex(q.t); R(7, 13, 10, 8, B); R(11, 13, 2, 8, T); R(7, 19, 10, 1, T); R(5, 13, 2, 2, T); R(17, 13, 2, 2, T); R(8, 21, 4, 3, B); R(12, 21, 4, 3, B);
+      if (q.m === 'ninja') { R(8, 5, 8, 8, B); R(8, 8, 8, 2, head); R(8, 8, 8, 1, T); }
+      else if (q.m === 'visor') { R(7, 4, 10, 9, B); R(8, 7, 8, 3, icoHex(q.v || q.t)); }
+      else if (q.m === 'kabuto') { R(7, 4, 10, 4, B); R(7, 7, 10, 1, T); R(11, 1, 2, 4, T); }
+      else if (q.m === 'robot') { R(7, 4, 10, 9, B); R(9, 7, 2, 2, T); R(13, 7, 2, 2, T); R(11, 1, 2, 3, T); R(10, 11, 4, 1, T); }
+      else if (q.m === 'pirate') { R(6, 3, 12, 2, '#111'); R(8, 1, 8, 3, '#111'); R(11, 2, 2, 1, '#fff'); R(13, 8, 3, 3, '#111'); }
+      else if (q.m === 'knight') { R(7, 4, 10, 8, B); R(8, 7, 8, 1, '#111'); R(11, 1, 2, 4, T); } }
     if (sk.pattern === 'maker') { R(7, 13, 10, 8, '#7a0f2a'); R(11, 13, 2, 8, '#ffd23f'); R(7, 13, 10, 2, '#f4f4f4'); R(7, 20, 10, 1, '#ffd23f'); }
     if (sk.pattern === 'flame') { R(7, 13, 10, 8, '#2a0d08'); R(9, 14, 1, 5, '#ff6a00'); R(12, 15, 1, 5, '#ff6a00'); R(15, 14, 1, 3, '#ff6a00'); }
     R(8, 5, 8, 8, head);
@@ -438,7 +447,14 @@
     setTimeout(() => { addMsg(room, rnd(PR.BOT_NAMES), rnd(REPLIES)); if ((tab === 'chat' && chatTab === 'global') || (tab === 'club' && clubTab === 'chat')) { const k = $('sideIn').value; render(); $('sideIn').value = k; } }, 900 + Math.random() * 1200);
   }
   // ---- gerçek lobi olayları ----
+  function updAcct() {
+    const S = NET && NET.S, el = $('prank'); if (!el || !S) return;
+    el.style.display = S.acct ? '' : 'none'; el.textContent = S.acct ? '\u{1F3C5} ' + S.rank + ' ' + S.mmr : ''; el.title = 'Dereceli puan (MMR). ' + S.rm + ' maç, ' + S.rw + ' galibiyet';
+    const nm = $('name'); if (nm) { nm.readOnly = !!S.acct; if (S.acct && nm.value !== S.acct) { nm.value = S.acct; PR.data.name = S.acct; } }
+  }
   if (NET) NET.sub((ev, x) => {
+    if (ev === 'welcome' || ev === 'status' || ev === 'auth' || ev === 'mmr') updAcct();
+    if (ev === 'mmr') toast('Derece: ' + (x.d > 0 ? '+' : '') + x.d + ' \u2192 ' + x.rank + ' ' + x.mmr, x.d < 0);
     const keep = () => { const k = $('sideIn').value; render(); $('sideIn').value = k; };
     const inChat = tab === 'chat' && chatTab === 'global', inClubChat = tab === 'club' && clubTab === 'chat';
     if (ev === 'chat') {
@@ -632,7 +648,7 @@
   const later = (fn, ms) => { mmTimers.push(setTimeout(fn, ms)); };
   function startMatchmaking(skipAnim) {
     const d = D(), modeIds = MODES.filter((m) => m[0] !== 'rnd').map((m) => m[0]), mapIds = MAPS.filter((m) => m[0] >= 0).map((m) => m[0]);
-    const mode = d.mode === 'rnd' ? rnd(modeIds) : d.mode, map = d.map < 0 ? rnd(mapIds) : d.map, tdm = mode === 'tdm' || mode === 'ctf', myTeam = Math.random() < 0.5 ? 0 : 1;
+    const mode = d.mode === 'rnd' ? rnd(modeIds) : d.mode, map = d.map < 0 ? rnd(mapIds) : d.map, tdm = mode === 'tdm' || mode === 'ctf' || mode === 'comp', myTeam = Math.random() < 0.5 ? 0 : 1;
     const mn = (id) => MODES.find((m) => m[0] === id)[1], mp = (id) => MAPS.find((m) => m[0] === id)[1];
     const names = [d.name || 'Sen'].concat(PR.BOT_NAMES.slice().sort(() => Math.random() - 0.5).slice(0, 7));
     const ov = $('mm'); ov.style.display = 'flex';
