@@ -107,11 +107,14 @@
     { gems: 8000, px: 100000, skin: [], hat: [], back: [], coll: [22, 23, 24, 25, 26], gold: 5, equipColl: 22 },
   ];
   function applyVip(level) {
-    level = Math.min(level | 0, VIP_TIERS.length); const have = P.vip | 0; if (level <= have) return false;
+    level = Math.min(level | 0, VIP_TIERS.length); const have = P.vip | 0;
+    if (level >= 1 && !P.vipW) { P.vipW = 1; for (const w of CATALOG.weapon) if (P.owned.weapon.indexOf(w.id) < 0) P.owned.weapon.push(w.id); if (level <= have) { save(); return true; } }
+    if (level <= have) return false;
     for (let i = have; i < level; i++) {
       const v = VIP_TIERS[i];
       P.gems += v.gems; P.px += v.px; P.crates.gold = (P.crates.gold || 0) + v.gold;
       for (const t of ['skin', 'hat', 'back', 'coll']) for (const id of v[t]) if (P.owned[t].indexOf(id) < 0) P.owned[t].push(id);
+      if (i === 0) for (const w of CATALOG.weapon) if (P.owned.weapon.indexOf(w.id) < 0) P.owned.weapon.push(w.id);
       if (i === 0) { P.equip.skin = 18; P.equip.hat = 23; P.equip.back = 14; }
       if (v.equipColl) P.equip.coll = v.equipColl;
     }
@@ -153,11 +156,23 @@
     P.owned[type].push(id); save();
     return { ok: true, msg: it.name + ' alındı' };
   }
+  // ---------- 5 hazır set (silah düzeni) ----------
+  const LSLOTS = ['melee', 'pistol', 'primary'];
+  function ensureSets() {
+    if (!Array.isArray(P.sets) || P.sets.length !== 5) { const cur = { melee: P.equip.melee, pistol: P.equip.pistol, primary: P.equip.primary }; P.sets = [0, 1, 2, 3, 4].map(() => Object.assign({}, cur)); }
+    P.setIdx = Math.max(0, Math.min(4, P.setIdx | 0));
+  }
+  function useSet(i) {
+    ensureSets(); i = Math.max(0, Math.min(4, i | 0)); P.setIdx = i;
+    for (const k of LSLOTS) { const id = P.sets[i][k]; if (owns('weapon', id)) P.equip[k] = id; else P.sets[i][k] = P.equip[k]; }
+    save(); return P.sets[i];
+  }
+  function setInfo() { ensureSets(); return { idx: P.setIdx, sets: P.sets }; }
   function equip(type, id) {
     if (!owns(type, id)) return false;
     if (type === 'weapon') {
       const slot = MELEE_IDS.indexOf(id) >= 0 ? 'melee' : PISTOL_IDS.indexOf(id) >= 0 ? 'pistol' : 'primary';
-      P.equip[slot] = id;
+      P.equip[slot] = id; ensureSets(); P.sets[P.setIdx][slot] = id;
     } else P.equip[type] = id;
     save(); return true;
   }
@@ -321,6 +336,6 @@
   }
 
   load();
-  const api = { applyVip, seasonInfo, normPass, rewardRarity, QUESTS, questState, claimQuest, buyTier, TIER_COST, PREMIUM_COST, RAR_NAMES, RAR_COLORS, rarityOf, CRATES, buyCrate, openCrate, randomItem, PASS_MAX, PASS_XP, passReward, describe, passReached, claimPass, buyPremium, matchEnd, addPassXp, COLORS, COLOR_NAMES, SKINS, HATS, BACKS, GSKINS, WEAPON_NAMES, CATALOG, CLUBS, BOT_NAMES, MISSION_DEFS, get data() { return P; }, save, load, level, levelProgress, addPx, addGems, addXp, owns, item, buy, equip, track, missionState, claimMission, claimBonus, weaponList, joinInfo, UP_MAX, UP_FX, upLevel, upCost, upgrade, clubBonus, importCloud, stats, setHook(f) { saveHook = f; }, reset() { P = fresh(); save(); } };
+  const api = { useSet, setInfo, applyVip, seasonInfo, normPass, rewardRarity, QUESTS, questState, claimQuest, buyTier, TIER_COST, PREMIUM_COST, RAR_NAMES, RAR_COLORS, rarityOf, CRATES, buyCrate, openCrate, randomItem, PASS_MAX, PASS_XP, passReward, describe, passReached, claimPass, buyPremium, matchEnd, addPassXp, COLORS, COLOR_NAMES, SKINS, HATS, BACKS, GSKINS, WEAPON_NAMES, CATALOG, CLUBS, BOT_NAMES, MISSION_DEFS, get data() { return P; }, save, load, level, levelProgress, addPx, addGems, addXp, owns, item, buy, equip, track, missionState, claimMission, claimBonus, weaponList, joinInfo, UP_MAX, UP_FX, upLevel, upCost, upgrade, clubBonus, importCloud, stats, setHook(f) { saveHook = f; }, reset() { P = fresh(); save(); } };
   root.VProfile = api;
 })(typeof self !== 'undefined' ? self : this);

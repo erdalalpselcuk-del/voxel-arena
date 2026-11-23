@@ -89,6 +89,23 @@
 
   /* duraklatma menüsü */
   #results{position:fixed;inset:0;z-index:6;display:none;align-items:center;justify-content:center;background:rgba(5,8,14,.72);padding:12px;overflow:auto}
+  .sets{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px}.sets .mini{flex:1;min-width:54px}
+  .podium{position:relative;display:flex;justify-content:center;align-items:flex-end;gap:6px;height:178px;margin:6px 0 10px;overflow:hidden}
+  .pc{display:flex;flex-direction:column;align-items:center;width:30%;max-width:130px}
+  .pav{position:relative;width:34px;height:54px;opacity:0;animation:pdrop .7s cubic-bezier(.3,1.6,.5,1) var(--d) forwards}
+  .pav i{position:absolute;left:50%;transform:translateX(-50%);display:block}.ph{width:22px;height:22px;top:0;border:2px solid rgba(0,0,0,.35)}.pbd{width:30px;height:20px;top:22px}.pl{width:20px;height:12px;top:42px;filter:brightness(.7)}
+  .pn{font:700 13px var(--hud,sans-serif);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:3px;opacity:0;animation:fadeUp .4s ease calc(var(--d) + .5s) forwards}
+  .pkk{font:600 11px var(--hud,sans-serif);color:#9aa7bf;opacity:0;animation:fadeUp .4s ease calc(var(--d) + .6s) forwards}
+  .pst{width:100%;background:linear-gradient(#3a465f,#222a3b);border:2px solid rgba(255,255,255,.2);border-bottom:0;display:flex;align-items:center;justify-content:center;transform-origin:bottom;transform:scaleY(0);animation:prise .6s ease calc(var(--d) - .5s) forwards}
+  .pst b{font:900 26px var(--hud,sans-serif);color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.5)}
+  .p1 .pst{height:66px;background:linear-gradient(#ffd23f,#b8860b)}.p1 .pst b{color:#5a3b00}.p2 .pst{height:46px;background:linear-gradient(#dfe5ee,#8a94a6)}.p2 .pst b{color:#333}.p3 .pst{height:32px;background:linear-gradient(#e0975a,#8a4f1f)}.p3 .pst b{color:#3b1f08}
+  .p1 .pn{color:#ffd23f}.pc.you .pn{text-decoration:underline}
+  .p1 .pav::after{content:"\1F451";position:absolute;left:50%;top:-20px;transform:translateX(-50%);font-size:20px;animation:crownPulse 1.6s ease-in-out infinite}
+  .pconf{position:absolute;inset:0;pointer-events:none}.pconf s{position:absolute;top:-8px;width:6px;height:9px;opacity:0;animation:pconf 2.2s linear infinite}
+  @keyframes pdrop{0%{opacity:0;transform:translateY(-120px)}100%{opacity:1;transform:none}}
+  @keyframes prise{to{transform:scaleY(1)}}
+  @keyframes pconf{0%{opacity:1;transform:translateY(0) rotate(0)}100%{opacity:0;transform:translateY(190px) rotate(360deg)}}
+  @media (max-height:520px){.podium{height:122px;margin:0 0 6px}.pst b{font-size:18px}.p1 .pst{height:44px}.p2 .pst{height:32px}.p3 .pst{height:22px}.pav{transform:scale(.8)}}
   .rbox{width:min(96vw,520px);background:rgba(8,12,22,.95);border:2px solid var(--line);padding:16px 20px;margin:auto}
   .rtitle{font:700 34px var(--pix);text-align:center;letter-spacing:.06em}.rtitle.win{color:var(--gold);text-shadow:0 3px 0 #7a5a00}.rtitle.lose{color:#ff6b5e;text-shadow:0 3px 0 #5a1710}
   .rsub{text-align:center;opacity:.75;font-size:15px;margin:2px 0 8px}
@@ -136,6 +153,19 @@
   .nav .dot{margin-left:auto;width:8px;height:8px;border-radius:50%;background:var(--red);display:none}
   .nav .dot.on{display:block}
   #center{grid-row:2;grid-column:2;position:relative;min-height:0}
+  #home{position:absolute;inset:0;pointer-events:none;z-index:2;display:flex;flex-direction:column;justify-content:space-between}
+  #home .hrow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:8px 6px 0;pointer-events:auto}
+  .hc{min-width:128px;padding:8px 12px;background:rgba(10,14,24,.78);border:2px solid rgba(255,255,255,.18);color:#fff;text-align:left;cursor:pointer;font-family:var(--hud,sans-serif)}
+  .hc small{display:block;font-size:10px;letter-spacing:1.5px;color:#9aa7bf}.hc b{font-size:15px}.hc.hot{border-color:#4cd964;box-shadow:0 0 16px rgba(76,217,100,.35);animation:hotp 1.8s ease-in-out infinite}
+  .hc.gold{border-color:#ffd23f}.hc.dim{opacity:.6}.hc:hover{background:rgba(30,40,64,.9)}
+  @keyframes hotp{50%{box-shadow:0 0 26px rgba(76,217,100,.7)}}
+  #home .hside{display:flex;justify-content:space-between;align-items:flex-end;padding:0 8px 96px;gap:8px}
+  .hbox{pointer-events:auto;width:200px;background:rgba(10,14,24,.72);border:2px solid rgba(255,255,255,.15);padding:8px 10px;display:flex;flex-direction:column;gap:5px}
+  .hm{font:600 12px var(--hud,sans-serif);color:#dfe6f5;display:flex;flex-direction:column;gap:3px}.hm i{display:block;height:5px;background:rgba(255,255,255,.15)}.hm u{display:block;height:100%;background:#ffd23f}
+  body.passwide #home,body[data-tab=locker] #home,body[data-tab=shop] #home{display:none}
+  @media (max-width:1100px){#home .hside{display:none}}
+  @media (max-height:520px){#home .hside{display:none}.hc{min-width:0;padding:5px 9px}.hc b{font-size:12px}#home .hrow{gap:5px;padding-top:4px}}
+
   #center .hint{position:absolute;left:50%;bottom:4px;transform:translateX(-50%);font-size:13px;opacity:.7;white-space:nowrap;text-shadow:0 1px 3px #000}
   #pvinfo{position:absolute;left:50%;top:6px;transform:translateX(-50%);text-align:center;font-weight:700;font-size:15px;color:var(--gold);text-shadow:0 1px 3px #000;min-height:20px}
   #side{grid-row:2;grid-column:3;display:flex;flex-direction:column;min-height:0;background:rgba(8,12,22,.82);border:1px solid var(--line)}
@@ -435,6 +465,14 @@
     .sc-ico{width:30px;height:30px}.sc-map{width:52px;height:32px}
     #sidehead{padding:5px 10px}#sidebody{padding:6px 10px}
     #credit{font-size:10px;bottom:3px;left:8px}
+    /* yatay telefonda: solda karakter + hızlı kartlar, sağda panel */
+    #menu{grid-template-columns:44% 1fr}
+    #topbar,.nav,#bottom{grid-column:1/-1}
+    #center{display:block;grid-row:3;grid-column:1;pointer-events:none}
+    #side{grid-row:3;grid-column:2;min-height:0}
+    #home .hrow{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:2px 2px 0;align-content:start}
+    #home .hc small{font-size:8px;letter-spacing:.5px}#center .hint{display:none}
+    body.passwide #center{display:none}body.passwide #side{grid-column:1/-1}
   }
 </style>
 </head>
@@ -448,7 +486,7 @@
     <div id="cur"><div class="chip" id="netst" style="font-size:13px;cursor:default;display:flex;align-items:center">YEREL</div><div class="chip" id="prank" style="display:none;color:#ffd23f"></div><div class="chip"><b id="ppx">0</b> PX</div><div class="chip gem"><b id="pgem">0</b> &#9670;</div></div>
   </div>
   <nav class="nav" id="nav" aria-label="Menü"></nav>
-  <div id="center"><div id="pvinfo"></div><div class="hint">Karakteri döndürmek için sürükle</div></div>
+  <div id="center"><div id="home"></div><div id="pvinfo"></div><div class="hint">Karakteri döndürmek için sürükle</div></div>
   <section id="side" aria-live="polite"><div id="sidehead"><h2 id="sidetitle"></h2><span class="sample" id="sample" style="display:none">ÖRNEK VERİ</span></div><div id="sidebody"></div><div id="sidefoot"><input id="sideIn" maxlength="120" placeholder="Mesaj yaz ve Enter'a bas" autocomplete="off"></div></section>
   <div id="bottom">
     <button class="selcard" id="modeBox" aria-label="Mod seç"><canvas class="sc-ico" id="scModeIco" width="16" height="16"></canvas><span class="sc-t"><small>MOD</small><b id="scMode"></b></span><i>&#9662;</i></button>

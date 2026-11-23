@@ -118,3 +118,4 @@ Sürekli açık kalma için bkz. **DEPLOY.md** (Fly.io, VPS + systemd + Caddy, R
 - **Özel hesaplar (yapımcı paketi)**: Sunucuda `VIP_USERS` (varsayılan `erdal,gencbaayy`) adları ayrılmıştır. Bu adlarla kayıt için `VIP_CODE` ortam değişkeni gerekir; ayarlanmazsa bu adlar kaydedilemez. Paket sunucudan gelen onayla verilir.
 - **Rekabetçi 5v5**: 10 kişilik takım maçı, yalnız giriş yapmış hesaplar, bot yok, MMR (Bronz/Gümüş/Altın/Platin/Elmas), benzer seviyedekilerle eşleşir. **Büyük Savaş**: 32 kişilik herkes-tek-modu.
 - Yeni kostümler: Gölge Ninja, Astronot, Siber Punk, Samuray, Robot, Korsan Kaptan, Altın Şövalye; Gençbay tek forma (#17).
+- **Podyum**: tur sonunda ilk 3 oyuncu animasyonlu podyumda (1. taçlı, konfeti). **Silah setleri 1-5**: Cephanelik'te set seç, seçtiğin silahlar aktif sete kaydolur. Kilitli silahlar (bıçak, karambit dahil) Cephanelik'ten doğrudan satın alınır. Ana ekran kartları: günlük bonus, sezon, rekabetçi, görevler.

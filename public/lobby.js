@@ -295,12 +295,20 @@
     return `<div class="uprow"><span class="pips">${[0, 1, 2, 3, 4].map((i) => `<i class="${i < lv ? 'on' : ''}"></i>`).join('')}</span><small>Seviye ${lv}/${PR.UP_MAX} &middot; ${fx}</small></div>`;
   }
   function upBtn(id) { const c = PR.upCost(id); return `<button class="mini up" data-wup="${id}" ${!c || D().px < c ? 'disabled' : ''}>${c ? 'Geliştir &middot; ' + c + ' PX' : 'MAKS'}</button>`; }
+  function buyCol(w) {
+    const it = PR.CATALOG.weapon.find((x) => x.id === w.id); if (!it) return '';
+    if (it.cur === 'pass') return '<div class="col"><small>Sezon pasından</small></div>';
+    const can = it.cur === 'px' ? D().px >= it.price : D().gems >= it.price;
+    return `<div class="col"><button class="mini" data-wbuy="${w.id}" ${can ? '' : 'disabled'}>Satın al &middot; ${it.price} ${it.cur === 'px' ? 'PX' : '&#9670;'}</button></div>`;
+  }
   function renderArsenal() {
+    const si = PR.setInfo();
+    const sets = `<span class="lab">SİLAH SETLERİ (seçtiğin silahlar aktif sete kaydedilir)</span><div class="sets">${[0, 1, 2, 3, 4].map((i) => `<button class="mini ${si.idx === i ? '' : 'alt'}" data-set="${i}">SET ${i + 1}</button>`).join('')}</div>`;
     const groups = [['melee', 'YAKIN DÖVÜŞ'], ['pistol', 'TABANCA'], ['primary', 'ANA SİLAH']];
-    setBody(groups.map(([k, nm]) => `<span class="lab">${nm}</span><div class="list">${PR.weaponList(k).map((w) => {
+    setBody(sets + groups.map(([k, nm]) => `<span class="lab">${nm}</span><div class="list">${PR.weaponList(k).map((w) => {
       const s = VM.WEAPONS[w.id], own = PR.owns('weapon', w.id), eq = D().equip[k] === w.id;
       const dmg = s.dmg * (s.pellets || 1), dps = dmg * 1000 / s.rate;
-      return `<div class="${own ? '' : 'off'}"><canvas class="ico" data-t="weapon" data-i="${w.id}" data-w="84" style="flex:none"></canvas><div class="grow">${esc(w.name)}${rarBadge('weapon', w.id)}<small>${own ? '' : 'Kilitli &middot; Mağaza\'dan al'}</small>${own && s.kind !== 'melee' ? statBar('Hasar', dmg, 120) + statBar('Hız', dps, 250) + statBar('Şarjör', s.mag, 100) : ''}${own ? upRow(w.id, s) : ''}</div>${own ? `<div class="col"><button class="mini ${eq ? '' : 'alt'}" data-wep="${w.id}" ${eq ? 'disabled' : ''}>${eq ? 'Seçili' : 'Seç'}</button>${upBtn(w.id)}</div>` : ''}</div>`;
+      return `<div class="${own ? '' : 'off'}"><canvas class="ico" data-t="weapon" data-i="${w.id}" data-w="84" style="flex:none"></canvas><div class="grow">${esc(w.name)}${rarBadge('weapon', w.id)}<small>${own ? '' : 'Kilitli'}</small>${own && s.kind !== 'melee' ? statBar('Hasar', dmg, 120) + statBar('Hız', dps, 250) + statBar('Şarjör', s.mag, 100) : ''}${own ? upRow(w.id, s) : ''}</div>${own ? `<div class="col"><button class="mini ${eq ? '' : 'alt'}" data-wep="${w.id}" ${eq ? 'disabled' : ''}>${eq ? 'Seçili' : 'Seç'}</button>${upBtn(w.id)}</div>` : buyCol(w)}</div>`;
     }).join('')}</div>`).join(''));
   }
   function renderMissions() {
@@ -409,13 +417,27 @@
       <span class="lab">İLERLEME</span><button class="btn warn" data-reset="1">PROFİLİ SIFIRLA</button><div class="phint">${live() ? 'Profil sunucuda yedeklenir (hesap anahtarınla her cihazdan açılır).' : 'Profil bu tarayıcıda saklanır.'}</div>${acctHtml()}
       <span class="lab">KONTROLLER</span><div class="phint" style="text-align:left;line-height:1.6">WASD hareket &middot; Boşluk zıpla &middot; Shift koş &middot; Ctrl/C eğil &middot; Q/X atılma<br>Sol tık ateş &middot; Sağ tık nişan &middot; R şarjör &middot; G bomba &middot; 1-7 silah &middot; Enter sohbet &middot; Tab skor &middot; Esc menü</div>`);
   }
+  function renderHome() {
+    const el = $('home'); if (!el) return;
+    const d = D(), si = PR.seasonInfo(), bonus = d.bonusDay === new Date().toISOString().slice(0, 10), S = NET && NET.S;
+    const ms = PR.missionState().filter((m) => !m.claimed).slice(0, 3);
+    const lv = PR.level ? PR.level() : 1, ranked = S && S.acct ? S.rank + ' ' + S.mmr : 'Giriş gerekli';
+    el.innerHTML = `<div class="hrow">
+      <button class="hc ${bonus ? 'dim' : 'hot'}" data-hbonus="1"><small>GÜNLÜK BONUS</small><b>${bonus ? 'Alındı \u2713' : '+200 PX +3 \u25C6'}</b></button>
+      <button class="hc" data-hgo="pass" style="border-color:${si.col}"><small>SEZON ${si.no} &middot; ${esc(si.name)}</small><b>${si.days} gün ${si.hours} sa kaldı</b></button>
+      <button class="hc gold" data-hq="comp"><small>REKABETÇİ 5v5</small><b>${esc(ranked)}</b></button>
+      <button class="hc" data-hq="big"><small>BÜYÜK SAVAŞ</small><b>32 oyuncu</b></button>
+    </div>
+    <div class="hside"><div class="hbox"><span class="lab">GÖREVLER</span>${ms.length ? ms.map((m) => `<div class="hm"><span>${esc(m.def.name || m.def.t || m.def.id)}</span><i><u style="width:${Math.round(100 * m.prog / m.def.goal)}%"></u></i></div>`).join('') : '<div class="hm"><span>Bugünkü görevler tamam \u2713</span></div>'}<button class="mini alt" data-hgo="missions">Tümü</button></div>
+    <div class="hbox"><span class="lab">SEVİYE ${lv}</span><div class="hm"><span>${d.kills} öldürme &middot; ${d.wins} galibiyet</span></div><div class="hm"><span>${S && S.status === 'on' ? S.lobby + ' kişi çevrimiçi' : 'Çevrimdışı'}</span></div><button class="mini alt" data-hgo="arsenal">Silah seti</button></div></div>`;
+  }
   function render() {
     const nm = (NAV.find((n) => n[0] === tab) || [0, 0, ''])[2];
     $('sidetitle').textContent = nm.toLocaleUpperCase('tr'); $('sample').style.display = sampleOn() ? '' : 'none';
     ({ crates: renderCrates, pass: renderPass, shop: () => renderShop(false), locker: () => renderShop(true), arsenal: renderArsenal, missions: renderMissions, rank: renderRank, club: renderClub, servers: renderServers, chat: renderChat, settings: renderSettings }[tab])();
     $('sideIn').placeholder = tab === 'club' ? 'Kulübe yaz...' : 'Mesaj yaz ve Enter\'a bas';
     document.body.classList.toggle('passwide', tab === 'pass');
-    buildNav(); top();
+    buildNav(); top(); renderHome();
   }
   function go(t) {
     tab = t; asked.lb = asked.who = 0; if (t === 'club') asked.clubs = 0; selItem = null; if (t === 'chat') unread = false; if (t === 'pass') passFirst = true;
@@ -508,7 +530,12 @@
     else if (d.pq) { const [pp, qid] = d.pq.split(':'); const n = PR.claimQuest(pp, qid); if (n >= 0) toast('Görev tamamlandı' + (n ? ' · ' + n + ' kademe!' : '')); render(); }
     else if (d.pbuy) { const r = PR.buyPremium(); toast(r.msg, !r.ok); render(); }
     else if (d.wup != null) { const r = PR.upgrade(+d.wup); toast(r.msg, !r.ok); render(); }
+    else if (d.wbuy != null) { const r = PR.buy('weapon', +d.wbuy); toast(r.msg, !r.ok); if (r.ok) PR.equip('weapon', +d.wbuy); resetPreview(); render(); }
+    else if (d.set != null) { PR.useSet(+d.set); resetPreview(); toast('SET ' + (+d.set + 1) + ' aktif'); render(); }
     else if (d.wep != null) { PR.equip('weapon', +d.wep); resetPreview(); render(); }
+    else if (d.hbonus) { if (PR.claimBonus()) toast('+200 PX ve 3 elmas!'); else toast('Bugünkü bonusu aldın', true); render(); }
+    else if (d.hgo) go(d.hgo);
+    else if (d.hq) { D().mode = d.hq; PR.save(); buildSel(); $('play').click(); }
     else if (d.bonus) { if (PR.claimBonus()) toast('+200 PX ve 3 elmas!'); render(); }
     else if (d.claim) { if (PR.claimMission(d.claim)) toast('Görev ödülü alındı'); render(); }
     else if (d.jointag) { NET.join(d.jointag); clubTab = 'info'; }

@@ -645,12 +645,15 @@ function showResults(m) {
   const zomR = MODE === 'zom', won = zomR ? m.team === 0 : tdm ? m.team === mt : m.id === myId;
   const place = Math.max(1, all.findIndex((q) => q.id === myId) + 1);
   const res = PR.matchEnd({ won, place: tdm || zomR ? 0 : place, kills: MS.kills, deaths: MS.deaths, heads: MS.heads, mode: MODE });
-  const rows = all.slice(0, 8).map((q, i) => `<tr class="${q.id === myId ? 'me' : ''}"><td>${i + 1}</td><td${tdm ? ` style="color:${TEAMHEX[q.tm | 0]}"` : ''}>${esc(q.name)}</td><td>${q.kills}</td><td>${q.deaths}</td></tr>`).join('');
+  const pod = [1, 0, 2].filter((i) => all[i]).map((i) => { const q = all[i], sk = PR.SKINS[q.skin | 0] || PR.SKINS[0], col = tdm ? TEAMHEX[q.tm | 0] : '#' + ((PR.CATALOG.color[q.color | 0] || PR.CATALOG.color[0]).hex).toString(16).padStart(6, '0'), head = '#' + (sk.head || 0xd9a066).toString(16).padStart(6, '0');
+    return `<div class="pc p${i + 1} ${q.id === myId ? 'you' : ''}" style="--d:${i === 0 ? 1.1 : i === 1 ? 0.5 : 0.8}s"><div class="pav"><i class="ph" style="background:${head}"></i><i class="pbd" style="background:${col}"></i><i class="pl" style="background:${col}"></i></div><div class="pn" ${tdm ? `style="color:${TEAMHEX[q.tm | 0]}"` : ''}>${esc(q.name)}</div><div class="pkk">${q.kills} öld.</div><div class="pst"><b>${i + 1}</b></div></div>`; }).join('');
+  const podium = all.length ? `<div class="podium">${pod}${all.length ? '<div class="pconf">' + Array.from({ length: 18 }, (_, k) => `<s style="left:${(k * 37) % 100}%;animation-delay:${(1.3 + (k % 6) * 0.15).toFixed(2)}s;background:${['#ffd23f', '#ff6b6b', '#4cd964', '#4aa8ff'][k % 4]}"></s>`).join('') + '</div>' : ''}</div>` : '';
+  const rows = all.slice(0, 6).map((q, i) => `<tr class="${q.id === myId ? 'me' : ''}"><td>${i + 1}</td><td${tdm ? ` style="color:${TEAMHEX[q.tm | 0]}"` : ''}>${esc(q.name)}</td><td>${q.kills}</td><td>${q.deaths}</td></tr>`).join('');
   const lines = res.lines.map((l) => `<div><span>${esc(l.t)}</span><b>${l.px ? '+' + l.px + ' PX ' : ''}${l.gem ? '+' + l.gem + ' ◆ ' : ''}${l.xp ? '+' + l.xp + ' XP' : ''}</b></div>`).join('');
   const crate = res.crate ? `<div class="drop">Kasa düştü: <b>${esc(PR.CRATES[res.crate].name)}</b></div>` : '';
   const r = $('results'); r.style.display = 'flex';
   r.innerHTML = `<div class="rbox"><div class="rtitle ${won ? 'win' : 'lose'}">${won ? 'ZAFER' : 'YENİLGİ'}</div><div class="rsub">${zomR ? (won ? `${m.zw || ZW[0] || WIN}. dalgaya kadar hayatta kaldınız` : `Zombiler kazandı &middot; ${Math.max(1, m.zw || 1)}. dalgada düştünüz`) : esc(m.name) + ' turu kazandı'}${tdm ? ` &middot; ${TS[0]} - ${TS[1]}` : ''}</div>
-    <table>${'<tr><th>#</th><th>OYUNCU</th><th>ÖLDÜRME</th><th>ÖLÜM</th></tr>' + rows}</table>
+    ${podium}<table>${'<tr><th>#</th><th>OYUNCU</th><th>ÖLDÜRME</th><th>ÖLÜM</th></tr>' + rows}</table>
     <div class="rlines"><div class="rh">ÖDÜLLER</div>${lines}<div class="rsum"><span>Toplam</span><b>+${res.px} PX${res.gem ? ' · +' + res.gem + ' ◆' : ''} · +${res.xp} XP</b></div><div><span>Sezon pası</span><b>+${res.passXp} XP${res.passUp ? ' · ' + res.passUp + ' kademe!' : ''}</b></div>${res.lv ? `<div class="drop">SEVİYE ATLADIN: ${PR.level()} (+${res.lv * 5} ◆)</div>` : ''}${crate}</div>
     <div class="rbtns"><button class="btn" id="rMenu">ANA MENÜYE DÖN</button></div><div class="rsub" id="rTimer"></div></div>`;
   $('rMenu').onclick = () => { sfx.ui(); leave(); };
