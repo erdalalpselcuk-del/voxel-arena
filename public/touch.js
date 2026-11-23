@@ -40,12 +40,12 @@
       if (t.identifier === joyId) joyMove(t.clientX, t.clientY);
       else if (t.identifier === lookId && ok()) {
         const dx = t.clientX - lx, dy = t.clientY - ly; lx = t.clientX; ly = t.clientY;
-        const sc = me.zoom ? (WP[me.w].zoom && WP[me.w].zoom < 30 ? 0.0018 : 0.003) : 0.0048, k = sc * S().sens;
+        const sc = me.zoom ? (WP[me.w].zoom && WP[me.w].zoom < 30 ? 0.0018 : 0.003) : 0.0048, k = sc * S().sens * (S().tsens || 1);
         me.yaw -= dx * k; me.pitch = Math.max(-1.55, Math.min(1.55, me.pitch - dy * k));
         me.swayX = Math.max(-1, Math.min(1, me.swayX + dx * 0.004)); me.swayY = Math.max(-1, Math.min(1, me.swayY + dy * 0.004));
       } else if (t.identifier === fireId && ok()) { // ateş parmağını kaydırarak da nişan al
         const dx = t.clientX - lx, dy = t.clientY - ly; lx = t.clientX; ly = t.clientY;
-        const k = (me.zoom ? 0.003 : 0.0048) * S().sens * 0.6; me.yaw -= dx * k; me.pitch = Math.max(-1.55, Math.min(1.55, me.pitch - dy * k));
+        const k = (me.zoom ? 0.003 : 0.0048) * S().sens * (S().tsens || 1) * 0.6; me.yaw -= dx * k; me.pitch = Math.max(-1.55, Math.min(1.55, me.pitch - dy * k));
       }
     }
     e.preventDefault();

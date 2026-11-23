@@ -85,6 +85,7 @@ const server = http.createServer((req, res) => {
 
 const totalHumans = () => { let n = 0; for (const r of rooms.values()) n += r.game.humans(); return n; };
 lobby.setGameCount(totalHumans);
+lobby.setPartyRoom((mode) => { const r = createRoom({ mode, priv: true }); return r ? r.code : null; });
 const wss = new WebSocketServer({ noServer: true, maxPayload: 8192 });
 // /lobby: hesap, sohbet, sıralama, kulüp; diğer her yol: oyun odası
 server.on('upgrade', (req, socket, head) => {

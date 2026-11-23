@@ -18,7 +18,7 @@
   const MODE_LIST = MODE_ORDER.concat(['comp', 'big']); // seçilebilir modlar (comp/big dönen odalarda çıkmaz)
   const TEAM_NAMES = ['Mavi', 'Kırmızı'];
   const BOT_NAMES = ['Kaplan', 'Şahin', 'Pixel', 'Blok', 'Zıpzıp', 'Gölge', 'Cesur', 'Tilki', 'Bulut', 'Kuzgun', 'Çakıl', 'Yıldız'];
-  const RESPAWN_MS = 3000, TAG_LIFE = 25000, LOOT_LIFE = 30000, LOOT_MAX = 24, PICKUP_RESPAWN = 20000, MAX_PLAYERS = 16;
+  const SPAWN_SHIELD = 3500, RESPAWN_MS = 3000, TAG_LIFE = 25000, LOOT_LIFE = 30000, LOOT_MAX = 24, PICKUP_RESPAWN = 20000, MAX_PLAYERS = 16;
   const clamp = (v, lo, hi, d) => (typeof v === 'number' && isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d);
 
   function rayBox(o, d, min, max) {
@@ -85,10 +85,18 @@
     this.bases = [sp[a].slice(), sp[b].slice()];
     this.flags = this.bases.map((h, t) => ({ team: t, home: h.slice(), pos: h.slice(), carrier: 0, dropAt: 0 }));
   };
+  // güvenli doğuş: düşmanlardan en uzak noktalar arasından seç, aynı noktaya art arda doğma
+  G.safeSpawn = function (p, list) {
+    const foes = [...this.players.values()].filter((q) => q !== p && q.alive && !(this.isTeam() && (q.team | 0) === (p.team | 0)));
+    const score = (s) => { let m = 1e9; for (const q of foes) { const d = Math.hypot(q.pos[0] - s[0], q.pos[2] - s[2]); if (d < m) m = d; } return m; };
+    const ranked = list.map((s) => [(p.lastSp && Math.hypot(p.lastSp[0] - s[0], p.lastSp[2] - s[2]) < 3 ? -50 : 0) + Math.min(score(s), 60) + Math.random() * 6, s]).sort((a, b) => b[0] - a[0]);
+    const pick = ranked[Math.floor(Math.random() * Math.min(3, ranked.length))][1].slice();
+    p.lastSp = pick.slice(); return pick;
+  };
   G.spawnFor = function (p) {
-    if (!this.bases) return this.spawn();
-    const b = this.bases[p.team | 0], near = this.map.spawns.map((s) => [Math.hypot(s[0] - b[0], s[2] - b[2]), s]).sort((x, y) => x[0] - y[0]).slice(0, 5);
-    return near[Math.floor(Math.random() * near.length)][1].slice();
+    if (!this.bases) return this.safeSpawn(p, this.map.spawns);
+    const b = this.bases[p.team | 0], near = this.map.spawns.map((s) => [Math.hypot(s[0] - b[0], s[2] - b[2]), s]).sort((x, y) => x[0] - y[0]).slice(0, 5).map((x) => x[1]);
+    return this.safeSpawn(p, near);
   };
   G.flagsPub = function () { return this.flags ? this.flags.map((f) => [f.carrier, +f.pos[0].toFixed(2), +f.pos[1].toFixed(2), +f.pos[2].toFixed(2)]) : 0; };
   G.dropFlag = function (pid) {
@@ -161,7 +169,7 @@
     const p = { id: this.nextId++, name: String(info.name || 'Oyuncu').replace(/[<>&"'`]/g, '').trim().slice(0, 16) || 'Oyuncu', color: clamp(info.color | 0, 0, 11, 0), hat: clamp(info.hat | 0, 0, 40, 0), skin: clamp(info.skin | 0, 0, 40, 0), back: clamp(info.back | 0, 0, 30, 0), pref: this.cleanLoadout(info.loadout), team: this.modeKey === 'zom' ? (human ? 0 : 1) : this.pickTeam(info.team), up: this.cleanUp(info.up), cl: clamp(info.coll | 0, 0, COLL_N - 1, 0),
       pos: [0, 0, 0], yaw: 0, pitch: 0, hp: 100, armor: 0, alive: true, w: 2, owned: [0, 1, 2], gren: 2, score: 0, kills: 0, deaths: 0, nextFire: 0, nextNade: 0, lastT: 0, crouch: false, human, joined: true,
       vy: 0, strafe: 1, strafeT: 0, goal: null, goalT: 0, seen: 0, stuck: 0, lastPos: null };
-    p.pos = this.spawnFor(p);
+    p.pos = this.spawnFor(p); p.shieldUntil = Date.now() + (human ? SPAWN_SHIELD : 0);
     this.loadout(p);
     this.players.set(p.id, p);
     if (human) this.send(p.id, this.initMsg(p));
@@ -242,9 +250,9 @@
   };
 
   G.respawn = function (p) {
-    p.pos = this.spawnFor(p); p.hp = 100; p.armor = 0; p.alive = true; p.vy = 0; p.crouch = false; p.shieldUntil = 0;
+    p.pos = this.spawnFor(p); p.hp = 100; p.armor = 0; p.alive = true; p.vy = 0; p.crouch = false; p.shieldUntil = Date.now() + (p.human ? SPAWN_SHIELD : 1200);
     this.loadout(p);
-    if (p.human) this.send(p.id, { t: 'respawn', p: p.pos, owned: p.owned, gren: p.gren, w: p.w });
+    if (p.human) this.send(p.id, { t: 'respawn', p: p.pos, owned: p.owned, gren: p.gren, w: p.w, sh: SPAWN_SHIELD });
   };
 
   G.endRound = function (winner, forced) { // forced: zombi modunda 0 = insanlar kazandı, 1 = zombiler

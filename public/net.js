@@ -3,7 +3,7 @@
 (function (root) {
   'use strict';
   const PR = root.VProfile, LOCAL = !!root.LOCAL_BUILD;
-  const S = { status: 'off', id: '', lobby: 0, game: 0, club: null, members: [], chat: [], cchat: [], who: null, acct: '', vip: 0, mmr: 1000, rank: 'Altın', rm: 0, rw: 0, dmmr: 0, authErr: '', lb: null, clubs: null, err: '' };
+  const S = { status: 'off', id: '', lobby: 0, game: 0, club: null, members: [], chat: [], cchat: [], who: null, acct: '', vip: 0, fr: null, party: null, invites: [], mmr: 1000, rank: 'Altın', rm: 0, rw: 0, dmmr: 0, authErr: '', lb: null, clubs: null, err: '' };
   const subs = [];
   let ws = null, tries = 0, rt = null, saveT = null, hbT = null, wantUrl = '', gen = 0, helloOk = false;
 
@@ -81,6 +81,10 @@
       case 'saved': emit('saved'); break;
       case 'auth': { lsSet('va_token', m.token); S.authErr = ''; if (!m.reg) PR.data.rev = 0; if (m.user) { PR.data.name = m.user; try { localStorage.setItem('va_prof2', JSON.stringify(PR.data)); } catch (e) {} } S.status = 'off'; tries = 0; refresh(); emit('auth', m.user); break; }
       case 'mmr': S.mmr = m.mmr; S.rank = m.rank; S.dmmr = m.d; emit('mmr', m); break;
+      case 'fr': S.fr = m; emit('fr'); break;
+      case 'party': S.party = m.id ? m : null; emit('party'); if (m.go) emit('partygo', m.go); break;
+      case 'party.inv': S.invites = S.invites.filter((x) => x.pid !== m.pid).concat([{ pid: m.pid, from: m.from }]).slice(-5); emit('invite', m); break;
+      case 'note': emit('note', m.m); break;
       case 'autherr': S.authErr = m.m || 'Hata'; emit('autherr', S.authErr); break;
       case 'kicked': S.status = 'kicked'; badge(); emit('status'); break;
     }
@@ -118,6 +122,10 @@
       try { localStorage.setItem('va_prof2', JSON.stringify(PR.data)); } catch (e) {}
       S.status = 'off'; refresh(); return true;
     },
+    friends() { send({ t: 'fr.list' }); },
+    addFriend(user) { send({ t: 'fr.add', user }); }, acceptFriend(id) { send({ t: 'fr.accept', id }); }, declineFriend(id) { send({ t: 'fr.decline', id }); }, removeFriend(id) { send({ t: 'fr.remove', id }); },
+    invite(id) { send({ t: 'party.invite', id }); }, joinParty(pid) { S.invites = S.invites.filter((x) => x.pid !== pid); send({ t: 'party.join', pid }); }, leaveParty() { send({ t: 'party.leave' }); },
+    kick(id) { send({ t: 'party.kick', id }); }, partyMode(mode) { send({ t: 'party.mode', mode }); }, partyGo() { send({ t: 'party.go' }); },
     register(user, pass, code) { S.authErr = ''; send({ t: 'reg', user, pass, code }); },
     login(user, pass) { S.authErr = ''; send({ t: 'login', user, pass }); },
     logout() { lsSet('va_token', ''); try { localStorage.removeItem('va_token'); } catch (e) {} S.acct = ''; S.vip = 0; S.status = 'off'; tries = 0; refresh(); emit('auth', ''); },

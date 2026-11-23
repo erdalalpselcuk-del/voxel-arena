@@ -63,6 +63,89 @@ function authMsg(ctx, msg) {
   send(ws, { t: 'auth', token: newSession(a.uid), user: a.name, reg: msg.t === 'reg' ? 1 : 0 });
 }
 
+
+// ---- arkadaşlar ve parti (yalnızca giriş yapmış hesaplar) ----
+let partyRoom = () => null; // server.js bağlar: (mode) -> oda kodu
+const parties = new Map(); // pid -> { id, leader, members: [uid], mode }
+const partyOf = new Map(); // uid -> pid
+const nameOf = (uid) => (db.users[uid] && db.users[uid].name) || 'Oyuncu';
+const isAcct = (uid) => /^a/.test(uid);
+function uidByName(n) { const a = db.accts[String(n || '').trim().toLowerCase()]; return a ? a.uid : ''; }
+function friendsView(uid) {
+  const u = db.users[uid] || {};
+  const mk = (id) => { const c = conns.get(id); return { id, name: nameOf(id), online: !!c, party: !!partyOf.get(id), rank: rankName((db.users[id] && db.users[id].mmr) || 1000) }; };
+  return { t: 'fr', friends: (u.friends || []).map(mk).sort((a, b) => (b.online - a.online) || a.name.localeCompare(b.name)), reqs: (u.fin || []).map((id) => ({ id, name: nameOf(id) })) };
+}
+function partyView(pid) { const p = parties.get(pid); return p ? { t: 'party', id: p.id, leader: p.leader, mode: p.mode, members: p.members.map((id) => ({ id, name: nameOf(id), online: conns.has(id) })) } : { t: 'party', id: '', members: [] }; }
+function pushParty(pid, extra) { const p = parties.get(pid); if (!p) return; const v = partyView(pid); for (const id of p.members) { const c = conns.get(id); if (c) send(c.ws, extra ? Object.assign({}, v, extra) : v); } }
+function leaveParty(uid) {
+  const pid = partyOf.get(uid); if (!pid) return; partyOf.delete(uid);
+  const p = parties.get(pid); if (!p) return;
+  p.members = p.members.filter((x) => x !== uid);
+  const c = conns.get(uid); if (c) send(c.ws, { t: 'party', id: '', members: [] });
+  if (p.members.length < 2) { for (const m of p.members) { partyOf.delete(m); const cc = conns.get(m); if (cc) send(cc.ws, { t: 'party', id: '', members: [] }); } parties.delete(pid); return; }
+  if (p.leader === uid) p.leader = p.members[0];
+  pushParty(pid);
+}
+function social(ctx, msg) {
+  const uid = ctx.uid; if (!uid || msg.t.slice(0, 3) !== 'fr.' && msg.t.slice(0, 6) !== 'party.') return false;
+  if (!isAcct(uid)) { send(ctx.ws, { t: 'err', m: 'Arkadaş ve parti için hesapla giriş yapmalısın' }); return true; }
+  const me = db.users[uid]; me.friends = me.friends || []; me.fin = me.fin || [];
+  switch (msg.t) {
+    case 'fr.list': send(ctx.ws, friendsView(uid)); send(ctx.ws, partyView(partyOf.get(uid))); break;
+    case 'fr.add': {
+      const id = uidByName(msg.user);
+      if (!id) return send(ctx.ws, { t: 'err', m: 'Bu adla bir hesap bulunamadı' }), true;
+      if (id === uid) return send(ctx.ws, { t: 'err', m: 'Kendini ekleyemezsin' }), true;
+      const o = db.users[id]; o.friends = o.friends || []; o.fin = o.fin || [];
+      if (me.friends.indexOf(id) >= 0) return send(ctx.ws, { t: 'err', m: 'Zaten arkadaşsınız' }), true;
+      if (me.fin.indexOf(id) >= 0) { // karşılıklı: direkt arkadaş
+        me.fin = me.fin.filter((x) => x !== id); me.friends.push(id); o.friends.push(uid);
+        send(ctx.ws, { t: 'note', m: nameOf(id) + ' ile arkadaş oldunuz' });
+      } else if (o.fin.indexOf(uid) < 0) { if (o.fin.length >= 50) return send(ctx.ws, { t: 'err', m: 'Bu oyuncunun istek kutusu dolu' }), true; o.fin.push(uid); send(ctx.ws, { t: 'note', m: 'İstek gönderildi' }); }
+      else send(ctx.ws, { t: 'note', m: 'İstek zaten gönderilmiş' });
+      store.touch(); send(ctx.ws, friendsView(uid)); const c = conns.get(id); if (c) { send(c.ws, friendsView(id)); send(c.ws, { t: 'note', m: me.name + ' seni arkadaş olarak ekledi / istek gönderdi' }); }
+      break;
+    }
+    case 'fr.accept': case 'fr.decline': {
+      const id = String(msg.id || ''); if (me.fin.indexOf(id) < 0) break;
+      me.fin = me.fin.filter((x) => x !== id);
+      if (msg.t === 'fr.accept' && db.users[id]) { const o = db.users[id]; o.friends = o.friends || []; if (me.friends.indexOf(id) < 0) me.friends.push(id); if (o.friends.indexOf(uid) < 0) o.friends.push(uid); const c = conns.get(id); if (c) send(c.ws, friendsView(id)); }
+      store.touch(); send(ctx.ws, friendsView(uid)); break;
+    }
+    case 'fr.remove': {
+      const id = String(msg.id || ''); me.friends = me.friends.filter((x) => x !== id); const o = db.users[id]; if (o && o.friends) o.friends = o.friends.filter((x) => x !== uid);
+      store.touch(); send(ctx.ws, friendsView(uid)); const c = conns.get(id); if (c) send(c.ws, friendsView(id)); break;
+    }
+    case 'party.invite': {
+      const id = String(msg.id || ''); if (me.friends.indexOf(id) < 0) break;
+      const c = conns.get(id); if (!c) return send(ctx.ws, { t: 'err', m: nameOf(id) + ' çevrimdışı' }), true;
+      if (partyOf.get(id)) return send(ctx.ws, { t: 'err', m: nameOf(id) + ' zaten bir partide' }), true;
+      let pid = partyOf.get(uid);
+      if (!pid) { pid = 'p' + Math.random().toString(36).slice(2, 8); parties.set(pid, { id: pid, leader: uid, members: [uid], mode: 'kc', inv: new Set() }); partyOf.set(uid, pid); }
+      const p = parties.get(pid); if (p.leader !== uid) return send(ctx.ws, { t: 'err', m: 'Sadece parti lideri davet edebilir' }), true;
+      if (p.members.length >= 5) return send(ctx.ws, { t: 'err', m: 'Parti dolu (en fazla 5 kişi)' }), true;
+      p.inv.add(id); send(c.ws, { t: 'party.inv', pid, from: me.name }); send(ctx.ws, { t: 'note', m: 'Parti daveti gönderildi' }); pushParty(pid); break;
+    }
+    case 'party.join': {
+      const pid = String(msg.pid || ''), p = parties.get(pid);
+      if (!p || !p.inv.has(uid)) return send(ctx.ws, { t: 'err', m: 'Davet geçersiz ya da süresi doldu' }), true;
+      if (partyOf.get(uid)) leaveParty(uid);
+      if (p.members.length >= 5) return send(ctx.ws, { t: 'err', m: 'Parti dolu' }), true;
+      p.inv.delete(uid); p.members.push(uid); partyOf.set(uid, pid); pushParty(pid); break;
+    }
+    case 'party.leave': leaveParty(uid); break;
+    case 'party.kick': { const pid = partyOf.get(uid), p = parties.get(pid); if (p && p.leader === uid && p.members.indexOf(String(msg.id)) > 0) leaveParty(String(msg.id)); break; }
+    case 'party.mode': { const p = parties.get(partyOf.get(uid)); if (p && p.leader === uid) { p.mode = String(msg.mode || '').slice(0, 8); pushParty(p.id); } break; }
+    case 'party.go': { // lider başlatır: özel oda açılır, herkes o koda girer
+      const p = parties.get(partyOf.get(uid)); if (!p || p.leader !== uid) break;
+      const code = partyRoom(p.mode === 'rnd' ? '' : p.mode); if (!code) return send(ctx.ws, { t: 'err', m: 'Sunucuda boş oda yok' }), true;
+      pushParty(p.id, { go: code }); break;
+    }
+  }
+  return true;
+}
+
 let gameCount = () => 0; // server.js bağlar: oyun içindeki gerçek oyuncu sayısı
 
 function clubLevel(c) { let xp = 0; for (const id of c.members) { const u = db.users[id]; if (u && u.stats) xp += u.stats.xp; } return 1 + Math.floor(xp / 3000); }
@@ -100,6 +183,7 @@ function onMessage(ctx, msg) {
   const { ws } = ctx;
   if (!msg || typeof msg.t !== 'string') return;
   if (msg.t === 'reg' || msg.t === 'login') return authMsg(ctx, msg);
+  if (typeof msg.t === 'string' && social(ctx, msg)) return;
   if (msg.t === 'hello') {
     if (ctx.uid) return;
     const token = String(msg.token || ''); if (token.length < 16 || token.length > 80) return ws.close();
@@ -182,11 +266,11 @@ wss.on('connection', (ws, req) => {
   });
   ws.on('close', () => {
     perIp.set(ip, Math.max(0, (perIp.get(ip) || 1) - 1));
-    if (ctx.uid && conns.get(ctx.uid) === ctx) { conns.delete(ctx.uid); const u = db.users[ctx.uid]; if (u) { u.seen = Date.now(); store.touch(); if (u.club) pushClub(u.club); } scheduleOnline(); }
+    if (ctx.uid && conns.get(ctx.uid) === ctx) { leaveParty(ctx.uid); conns.delete(ctx.uid); const u = db.users[ctx.uid]; if (u) { u.seen = Date.now(); store.touch(); if (u.club) pushClub(u.club); } scheduleOnline(); }
   });
   ws.on('error', () => {});
 });
 // bağlantı kopukluğunu ve boşta kalan proxy zaman aşımlarını yakalamak için canlılık sinyali
 setInterval(() => { for (const c of wss.clients) { const x = c._ctx; if (!x) continue; if (!x.alive || (!x.uid && Date.now() - x.born > 15000)) { c.terminate(); continue; } x.alive = false; try { c.ping(); } catch (e) {} } }, 25000).unref();
 
-module.exports = { verify, rankResult, wss, onlineInfo, setGameCount: (f) => { gameCount = f; }, stats: () => ({ users: Object.keys(db.users).length, clubs: Object.keys(db.clubs).length, lobby: conns.size }) };
+module.exports = { verify, rankResult, wss, onlineInfo, setGameCount: (f) => { gameCount = f; }, setPartyRoom: (f) => { partyRoom = f; }, stats: () => ({ users: Object.keys(db.users).length, clubs: Object.keys(db.clubs).length, lobby: conns.size }) };

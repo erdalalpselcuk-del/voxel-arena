@@ -12,7 +12,7 @@
   const MODES = [['kc', 'Kill Confirmed'], ['ffa', 'Herkes Tek'], ['rocket', 'Roket Arenası'], ['tdm', 'Takım Savaşı'], ['ctf', 'Bayrak Kapmaca'], ['zom', 'Zombi Dalgası'], ['comp', 'Rekabetçi 5v5'], ['big', 'Büyük Savaş (32)'], ['rnd', 'Rastgele']];
   const MAPS = [[-1, 'Rastgele']].concat((VM.THEMES || []).map((t, i) => [i, t.name || ('Harita ' + (i + 1))]));
   const CATS = [['color', 'Renk'], ['skin', 'Karakter'], ['hat', 'Şapka'], ['back', 'Sırt'], ['gskin', 'Silah Kaplama'], ['coll', 'Koleksiyon'], ['weapon', 'Silah']];
-  const NAV = [['shop', '\u{1F6D2}', 'Mağaza'], ['crates', '\u{1F4E6}', 'Kasalar'], ['locker', '\u{1F9E5}', 'Dolap'], ['arsenal', '\u{1F52B}', 'Cephanelik'], ['missions', '\u{1F3AF}', 'Görevler'], ['pass', '\u{1F3AB}', 'Sezon Pası'], ['rank', '\u{1F3C6}', 'Sıralama'], ['club', '\u{1F6E1}', 'Kulüp'], ['servers', '\u{1F310}', 'Sunucular'], ['chat', '\u{1F4AC}', 'Sohbet'], ['settings', '⚙', 'Ayarlar']];
+  const NAV = [['shop', '\u{1F6D2}', 'Mağaza'], ['crates', '\u{1F4E6}', 'Kasalar'], ['locker', '\u{1F9E5}', 'Dolap'], ['arsenal', '\u{1F52B}', 'Cephanelik'], ['missions', '\u{1F3AF}', 'Görevler'], ['pass', '\u{1F3AB}', 'Sezon Pası'], ['rank', '\u{1F3C6}', 'Sıralama'], ['club', '\u{1F6E1}', 'Kulüp'], ['friends', '\u{1F465}', 'Arkadaşlar'], ['servers', '\u{1F310}', 'Sunucular'], ['chat', '\u{1F4AC}', 'Sohbet'], ['settings', '⚙', 'Ayarlar']];
   const SAMPLE = { rank: 1, club: 1, servers: 1, chat: 1 };
 
   let tab = 'chat', cat = 'color', selItem = null, chatTab = 'global', clubTab = 'info', unread = false, tt = 0;
@@ -315,6 +315,16 @@
     const bonus = D().bonusDay === new Date().toISOString().slice(0, 10);
     setBody(`<button class="btn go" data-bonus="1" ${bonus ? 'disabled' : ''}>${bonus ? 'GÜNLÜK BONUS ALINDI' : 'GÜNLÜK BONUS: 200 PX + 3 &#9670;'}</button><span class="lab">BUGÜNÜN GÖREVLERİ</span><div class="list">${PR.missionState().map((m) => `<div><div class="grow">${esc(m.def.name)}<small>${m.prog}/${m.def.goal} &middot; ödül: ${m.def.px ? m.def.px + ' PX ' : ''}${m.def.gem ? m.def.gem + ' &#9670;' : ''}</small><div class="bar"><i style="width:${m.prog / m.def.goal * 100}%"></i></div></div><button class="mini" data-claim="${m.def.id}" ${m.done && !m.claimed ? '' : 'disabled'}>${m.claimed ? 'Alındı' : 'Al'}</button></div>`).join('')}</div><div class="phint">Görevler her gün sıfırlanır. Oyunda öldürme, kafa vuruşu ve tur zaferi sayılır.</div>`);
   }
+  function renderFriends() {
+    const S = NET && NET.S;
+    if (!S || !S.acct) { setBody('<div class="phint">Arkadaş eklemek ve parti kurmak için <b>hesapla giriş yap</b>. Açılış ekranında KAYIT sekmesinden hesap açabilirsin. Misafirler arkadaş ekleyemez.</div>'); return; }
+    ask('friends'); const F = S.fr, P = S.party, me = S.id, lead = P && P.leader === me;
+    const inv = S.invites.map((x) => `<div class="fr"><span><b>${esc(x.from)}</b> seni partiye çağırıyor</span><button class="mini" data-pjoin="${x.pid}">Katıl</button></div>`).join('');
+    const party = P ? `<span class="lab">PARTİN (${P.members.length}/5)</span><div class="list">${P.members.map((m) => `<div class="fr"><span>${m.id === P.leader ? '\u{1F451} ' : ''}${esc(m.name)}${m.id === me ? ' (sen)' : ''}</span>${lead && m.id !== me ? `<button class="mini alt" data-pkick="${m.id}">At</button>` : ''}</div>`).join('')}</div><div class="phint">${lead ? 'Modu seç ve <b>OYNA</b>\'ya bas: parti üyeleri aynı odaya girer. Mod: <b>' + esc((MODES.find((x) => x[0] === (P.mode || D().mode)) || ['', D().mode])[1]) + '</b>' : 'Lider OYNA\'ya basınca otomatik aynı odaya gireceksin.'}</div><button class="btn" data-pleave="1">PARTİDEN AYRIL</button>` : '';
+    const reqs = F && F.reqs.length ? `<span class="lab">İSTEKLER</span><div class="list">${F.reqs.map((r) => `<div class="fr"><span>${esc(r.name)}</span><span><button class="mini" data-facc="${r.id}">Kabul</button> <button class="mini alt" data-fdec="${r.id}">Reddet</button></span></div>`).join('')}</div>` : '';
+    const list = !F ? '<div class="phint">Yükleniyor…</div>' : F.friends.length ? `<div class="list">${F.friends.map((f) => `<div class="fr"><span><i class="dot ${f.online ? 'on' : ''}"></i>${esc(f.name)}<small> ${esc(f.rank)}${f.party ? ' &middot; partide' : ''}</small></span><span>${f.online ? `<button class="mini" data-pinv="${f.id}">Partiye çağır</button> ` : ''}<button class="mini alt" data-frm="${f.id}">Sil</button></span></div>`).join('')}</div>` : '<div class="phint">Henüz arkadaşın yok. Aşağıdan kullanıcı adıyla ekle.</div>';
+    setBody(`${inv}${party}${reqs}<span class="lab">ARKADAŞLARIM</span>${list}<span class="lab">ARKADAŞ EKLE</span><div class="row"><input id="frName" maxlength="16" placeholder="Kullanıcı adı" style="flex:1;padding:8px;background:rgba(0,0,0,.45);color:#fff;border:2px solid rgba(255,255,255,.2);font:600 15px var(--hud);user-select:text"><button class="mini" data-fadd="1">Ekle</button></div>`);
+  }
   function renderRank() {
     if (live()) {
       ask('lb'); const L = NET.S.lb;
@@ -411,6 +421,7 @@
   function renderSettings() {
     const s = D().settings;
     setBody(`<span class="lab">TAKMA AD</span><div class="phint" style="text-align:left;margin:0">Üst çubuktaki kutudan değiştirebilirsin.</div><span class="lab">OYUN AYARLARI</span>
+      ${'ontouchstart' in window ? `<div class="srow"><label for="sTs">Dokunmatik hassasiyet</label><input type="range" id="sTs" min="0.4" max="2.2" step="0.05" value="${s.tsens || 1}"><output id="sTsV">${(+(s.tsens || 1)).toFixed(2)}</output></div>` : ''}
       <div class="srow"><label for="sSens">Hassasiyet</label><input type="range" id="sSens" min="0.3" max="2.5" step="0.05" value="${s.sens}"><output id="sSensV">${(+s.sens).toFixed(2)}</output></div>
       <div class="srow"><label for="sFov">Görüş (FOV)</label><input type="range" id="sFov" min="60" max="100" step="1" value="${s.fov}"><output id="sFovV">${s.fov}</output></div>
       <div class="srow"><label for="sVol">Ses</label><input type="range" id="sVol" min="0" max="1" step="0.05" value="${s.vol}"><output id="sVolV">${Math.round(s.vol * 100)}</output></div>
@@ -434,7 +445,7 @@
   function render() {
     const nm = (NAV.find((n) => n[0] === tab) || [0, 0, ''])[2];
     $('sidetitle').textContent = nm.toLocaleUpperCase('tr'); $('sample').style.display = sampleOn() ? '' : 'none';
-    ({ crates: renderCrates, pass: renderPass, shop: () => renderShop(false), locker: () => renderShop(true), arsenal: renderArsenal, missions: renderMissions, rank: renderRank, club: renderClub, servers: renderServers, chat: renderChat, settings: renderSettings }[tab])();
+    ({ crates: renderCrates, pass: renderPass, shop: () => renderShop(false), locker: () => renderShop(true), arsenal: renderArsenal, missions: renderMissions, rank: renderRank, club: renderClub, friends: renderFriends, servers: renderServers, chat: renderChat, settings: renderSettings }[tab])();
     $('sideIn').placeholder = tab === 'club' ? 'Kulübe yaz...' : 'Mesaj yaz ve Enter\'a bas';
     document.body.classList.toggle('passwide', tab === 'pass');
     buildNav(); top(); renderHome();
@@ -476,6 +487,9 @@
   }
   if (NET) NET.sub((ev, x) => {
     if (ev === 'welcome' || ev === 'status' || ev === 'auth' || ev === 'mmr') updAcct();
+    if (ev === 'fr' || ev === 'party' || ev === 'invite') { if (tab === 'friends') { const ae = document.activeElement, k = $('frName') ? $('frName').value : ''; render(); if ($('frName')) { $('frName').value = k; if (ae && ae.id === 'frName') $('frName').focus(); } } else if (ev === 'invite') { toast(x.from + ' seni partiye çağırıyor (Arkadaşlar)'); buildNav(); } renderHome(); }
+    if (ev === 'note') toast(x);
+    if (ev === 'partygo') { if (document.body.classList.contains('playing')) return; roomReq = { kind: 'code', code: x }; play(true); }
     if (ev === 'mmr') toast('Derece: ' + (x.d > 0 ? '+' : '') + x.d + ' \u2192 ' + x.rank + ' ' + x.mmr, x.d < 0);
     const keep = () => { const k = $('sideIn').value; render(); $('sideIn').value = k; };
     const inChat = tab === 'chat' && chatTab === 'global', inClubChat = tab === 'club' && clubTab === 'chat';
@@ -533,6 +547,10 @@
     else if (d.wbuy != null) { const r = PR.buy('weapon', +d.wbuy); toast(r.msg, !r.ok); if (r.ok) PR.equip('weapon', +d.wbuy); resetPreview(); render(); }
     else if (d.set != null) { PR.useSet(+d.set); resetPreview(); toast('SET ' + (+d.set + 1) + ' aktif'); render(); }
     else if (d.wep != null) { PR.equip('weapon', +d.wep); resetPreview(); render(); }
+    else if (d.fadd) { const v = ($('frName') || {}).value || ''; if (v.trim()) NET.addFriend(v.trim()); }
+    else if (d.facc) NET.acceptFriend(d.facc); else if (d.fdec) NET.declineFriend(d.fdec); else if (d.frm) NET.removeFriend(d.frm);
+    else if (d.pinv) NET.invite(d.pinv); else if (d.pjoin) { NET.joinParty(d.pjoin); toast('Partiye katıldın'); }
+    else if (d.pleave) NET.leaveParty(); else if (d.pkick) NET.kick(d.pkick);
     else if (d.hbonus) { if (PR.claimBonus()) toast('+200 PX ve 3 elmas!'); else toast('Bugünkü bonusu aldın', true); render(); }
     else if (d.hgo) go(d.hgo);
     else if (d.hq) { D().mode = d.hq; PR.save(); buildSel(); $('play').click(); }
@@ -565,7 +583,7 @@
   });
   $('sidebody').addEventListener('input', (e) => {
     const id = e.target.id, v = +e.target.value, s = D().settings;
-    if (id === 'sSens') { s.sens = v; $('sSensV').textContent = v.toFixed(2); } else if (id === 'sFov') { s.fov = v; $('sFovV').textContent = v; } else if (id === 'sVol') { s.vol = v; $('sVolV').textContent = Math.round(v * 100); VA.setVolume(v); } else return;
+    if (id === 'sTs') { s.tsens = v; $('sTsV').textContent = v.toFixed(2); } else if (id === 'sSens') { s.sens = v; $('sSensV').textContent = v.toFixed(2); } else if (id === 'sFov') { s.fov = v; $('sFovV').textContent = v; } else if (id === 'sVol') { s.vol = v; $('sVolV').textContent = Math.round(v * 100); VA.setVolume(v); } else return;
     PR.save();
   });
 
@@ -721,7 +739,12 @@
   }
 
   let roomReq = null;
-  function play() {
+  function play(fromParty) {
+    const PT = NET && NET.S.party;
+    if (PT && !roomReq && fromParty !== true) { // partideyken: lider başlatır, üyeler bekler
+      if (PT.leader === NET.S.id) { NET.partyMode(D().mode); setTimeout(() => NET.partyGo(), 120); toast('Parti oyunu başlatılıyor…'); } else toast('Parti lideri başlatınca otomatik gireceksin', true);
+      return;
+    }
     if (window.VTouch) VTouch.enterFull();
     if (!D().name.trim()) { D().name = 'Oyuncu' + (100 + Math.floor(Math.random() * 900)); $('name').value = D().name; }
     PR.save();
@@ -735,7 +758,7 @@
     VA.hooks.status('Oda aranıyor…');
     VA.start(info);
   }
-  $('play').addEventListener('click', play);
+  $('play').addEventListener('click', () => play());
 
   VA.hooks.toast = (t) => toast(t, true);
   VA.hooks.status = (t) => { $('status').textContent = t || ''; };

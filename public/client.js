@@ -585,6 +585,7 @@ function onMsg(m) {
       me.pos.set(...m.p); me.vel.set(0, 0, 0); me.kb.set(0, 0, 0); me.alive = true; me.yaw = 0; me.pitch = 0;
       resetLoadout(m);
       startPlaying();
+      setTimeout(() => { if (me.alive) startShield(3500); }, 300);
       break;
     case 'join': players.set(m.player.id, m.player); if (m.player.id !== myId) { ensureAvatar(m.player); feed(`<b>${esc(m.player.name)}</b> katıldı`); } break;
     case 'leave': { const p = players.get(m.id); if (p) feed(`<b>${esc(p.name)}</b> ayrıldı`); players.delete(m.id); removeAvatar(m.id); lastShot.delete(m.id); break; }
@@ -592,8 +593,8 @@ function onMsg(m) {
     case 'snap': onSnap(m); break;
     case 'shot': onShot(m); break;
     case 'fire': lastShot.set(m.id, performance.now()); if (m.id !== myId) { const a = avatars.get(m.id); const d = a ? a.group.position.distanceTo(camera.position) : 99; sfx.shot(m.w, Math.max(0, 1 - d / 55) * 0.8); } break;
-    case 'hit': hitMark(m.head, m.kill); if (m.head) { PR.track('heads', 1); MS.heads++; } break;
-    case 'dmg': {
+    case 'hit': if (TOUCH && navigator.vibrate) navigator.vibrate(m.kill ? [30, 40, 60] : 18); hitMark(m.head, m.kill); if (m.head) { PR.track('heads', 1); MS.heads++; } break;
+    case 'dmg': { if (TOUCH && navigator.vibrate) navigator.vibrate(40);
       sfx.hurt(); const v = $('vig'); v.style.boxShadow = 'inset 0 0 170px 40px rgba(220,0,0,.7)'; setTimeout(() => (v.style.boxShadow = 'inset 0 0 170px 30px rgba(220,0,0,0)'), 160);
       if (m.from) { const dx = m.from[0] - me.pos.x, dz = m.from[2] - me.pos.z; const fw = [-Math.sin(me.yaw), -Math.cos(me.yaw)], rt = [Math.cos(me.yaw), -Math.sin(me.yaw)]; const ang = Math.atan2(dx * rt[0] + dz * rt[1], dx * fw[0] + dz * fw[1]); const w = $('dirwrap'); w.style.transform = `rotate(${ang}rad)`; w.style.transition = 'none'; w.style.opacity = '1'; void w.offsetWidth; w.style.transition = 'opacity .8s'; w.style.opacity = '0'; }
       break;
@@ -613,7 +614,7 @@ function onMsg(m) {
     case 'loot': addLoot(m); break;
     case 'lootGone': { const o = removeLoot(m.id); if (o && m.kind === 'take') { const col = VW.RARITY_INFO[o.userData.r].color; burst(o.position.clone().setY(o.position.y + 1), col, 14, 4, 0.22, 0.6, 0); if (m.by !== myId) { const q = players.get(m.by); if (q && o.userData.r >= 2) feed(`<b>${esc(q.name)}</b> ${esc(WP[m.w].name)} aldı`); } } break; }
     case 'tagGone': removeTag(m.id); if (m.kind === 'confirm' && m.by === myId) { sfx.tag(); reward(5, 10, 'künye'); } break;
-    case 'respawn': me.pos.set(...m.p); me.vel.set(0, 0, 0); me.kb.set(0, 0, 0); me.alive = true; resetLoadout(m); showMsg('', 0); killerInfo = null; break;
+    case 'respawn': me.pos.set(...m.p); me.vel.set(0, 0, 0); me.kb.set(0, 0, 0); me.alive = true; resetLoadout(m); showMsg('', 0); killerInfo = null; if (m.sh) startShield(m.sh); break;
     case 'own': if (me.owned.indexOf(m.w) < 0) me.owned.push(m.w); me.ammo[m.w] = magOf(m.w); pop(WP[m.w].name + ' alındı'); sfx.pick('w'); break;
     case 'got': me.hp = m.hp; me.armor = m.ar; me.gren = m.gren; sfx.pick(m.kind); if (m.kind === 'hp') pop('+ SAĞLIK'); else if (m.kind === 'armor') pop('+ ZIRH'); else if (m.kind === 'gren') pop('+ BOMBA'); break;
     case 'pk': pickupState[m.i] = !!m.on; if (pickupMeshes[m.i]) pickupMeshes[m.i].g.visible = !!m.on; break;
@@ -636,6 +637,13 @@ function onMsg(m) {
       if (!locked && document.body.classList.contains('playing')) { paused = true; document.body.classList.add('paused'); syncPauseUi(); }
       break;
   }
+}
+let shieldEnd = 0, shieldEl = null;
+function startShield(ms) {
+  shieldEnd = performance.now() + ms;
+  if (!shieldEl) { shieldEl = document.createElement('div'); shieldEl.style.cssText = 'position:fixed;left:50%;top:' + (TOUCH ? '58px' : '24%') + ';transform:translateX(-50%);z-index:4;pointer-events:none;font:800 14px var(--hud,sans-serif);letter-spacing:2px;color:#9ee6ff;text-shadow:0 0 10px #38b6ff;text-align:center;display:none'; shieldEl.innerHTML = 'KORUMA<div style="width:120px;height:5px;background:rgba(255,255,255,.2);margin-top:3px"><i style="display:block;height:100%;background:#38b6ff;width:100%"></i></div>'; document.body.appendChild(shieldEl); }
+  shieldEl.style.display = 'block';
+  const t = setInterval(() => { const l = shieldEnd - performance.now(); if (l <= 0 || !me.alive) { shieldEl.style.display = 'none'; clearInterval(t); return; } shieldEl.lastChild.firstChild.style.width = (100 * l / ms) + '%'; }, 80);
 }
 function hideResults() { const r = $('results'); if (r) { r.style.display = 'none'; r.innerHTML = ''; } clearInterval(resultsTimer); }
 let resultsTimer = 0;
