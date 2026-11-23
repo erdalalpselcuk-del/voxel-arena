@@ -21,14 +21,15 @@
     { name: 'Kral', head: 0xf1c27d, eye: 0x111111, pattern: 'royal' },
     { name: 'Gökkuşağı', head: 0xf1c27d, eye: 0x111111, pattern: 'rainbow' },
     { name: 'Galaksi', head: 0x2b1b4d, eye: 0xffffff, pattern: 'galaxy' },
-    { name: 'Forma Sarı #9', head: 0xd9a066, eye: 0x111111, pattern: 'jersey', jc: [0xffd23f, 0x14213d], jn: 'GENÇBAY' },
-    { name: 'Forma Lacivert #9', head: 0xd9a066, eye: 0x111111, pattern: 'jersey', jc: [0x14213d, 0xffd23f], jn: 'GENÇBAY' },
-    { name: 'Forma Kırmızı #9', head: 0xd9a066, eye: 0x111111, pattern: 'jersey', jc: [0xd32f2f, 0xffffff], jn: 'GENÇBAY' },
+    { name: 'Gençbay Sarı #17', head: 0xd9a066, eye: 0x111111, pattern: 'jersey', jc: [0xffd23f, 0x14213d], jn: 'GENÇBAY', num: '17' },
+    { name: 'Gençbay Lacivert #17', head: 0xd9a066, eye: 0x111111, pattern: 'jersey', jc: [0x14213d, 0xffd23f], jn: 'GENÇBAY', num: '17' },
+    { name: 'Gençbay Kırmızı #17', head: 0xd9a066, eye: 0x111111, pattern: 'jersey', jc: [0xd32f2f, 0xffffff], jn: 'GENÇBAY', num: '17' },
     { name: 'Yapımcı Kral', head: 0xf1c27d, eye: 0x111111, pattern: 'maker' },
     { name: 'Ateş Ruhu', head: 0x2a0d08, eye: 0xff8a00, pattern: 'flame' },
+    { name: 'Gençbay Özel #17', head: 0xd9a066, eye: 0x111111, pattern: 'jersey', jc: [0x111111, 0xffc107], jn: 'GENÇBAY', num: '17' },
   ];
-  const HATS = ['Şapkasız', 'Kep', 'Taç', 'Miğfer', 'Anten', 'Boynuz', 'Kovboy', 'Silindir', 'Halka', 'Korsan', 'Cadı', 'Aşçı', 'Noel', 'Mohawk', 'Baret', 'Şövalye Miğferi', 'Alev', 'Kral Tacı', 'Ördek', 'Kulaklık', 'Siber Vizör', 'Mantar', 'Elmas Taç'];
-  const BACKS = ['Yok', 'Sırt Çantası', 'Pelerin', 'Kanatlar', 'Jetpack', 'Kılıç', 'Ok Kılıfı', 'Kalkan', 'Şeytan Kanatları', 'Dalgıç Tüpü', 'Gitar', 'Gökkuşağı Pelerin', 'Roket Çantası', 'Altın Kanatlar'];
+  const HATS = ['Şapkasız', 'Kep', 'Taç', 'Miğfer', 'Anten', 'Boynuz', 'Kovboy', 'Silindir', 'Halka', 'Korsan', 'Cadı', 'Aşçı', 'Noel', 'Mohawk', 'Baret', 'Şövalye Miğferi', 'Alev', 'Kral Tacı', 'Ördek', 'Kulaklık', 'Siber Vizör', 'Mantar', 'Elmas Taç', 'Basket Bandı'];
+  const BACKS = ['Yok', 'Sırt Çantası', 'Pelerin', 'Kanatlar', 'Jetpack', 'Kılıç', 'Ok Kılıfı', 'Kalkan', 'Şeytan Kanatları', 'Dalgıç Tüpü', 'Gitar', 'Gökkuşağı Pelerin', 'Roket Çantası', 'Altın Kanatlar', 'Basket Topu'];
   const GSKINS = [
     { name: 'Standart', color: null }, { name: 'Kızıl', color: 0xc0392b }, { name: 'Neon Mavi', color: 0x2aa8ff },
     { name: 'Orman', color: 0x4f7a3a }, { name: 'Altın', color: 0xffd23f }, { name: 'Mor', color: 0x8e44ad },
@@ -42,9 +43,9 @@
   const spec = (list, prices) => list.map((o, i) => Object.assign({ id: i }, o, prices[i] || px(0)));
   const CATALOG = {
     color: COLORS.map((c, i) => Object.assign({ id: i, name: COLOR_NAMES[i], hex: c }, i < 6 ? px(0) : px(100 + (i - 6) * 30))),
-    skin: spec(SKINS.map((x) => ({ name: x.name })), [px(0), px(400), px(600), px(500), gem(25), gem(60), px(700), px(650), gem(40), px(800), px(750), px(600), pass(3), pass(2), px(900), pass(3), pass(3), pass(3), gem(40), gem(40), px(1500), gem(150), gem(90)]),
-    hat: spec(HATS.map((n) => ({ name: n })), [px(0), px(150), gem(20), px(250), px(100), px(300), px(350), px(400), gem(15), px(300), px(350), px(200), px(250), px(300), px(200), px(500), pass(3), pass(3), px(400), px(350), pass(2), px(450), pass(3)]),
-    back: spec(BACKS.map((n) => ({ name: n })), [px(0), px(200), px(350), gem(30), px(500), px(250), px(300), px(350), pass(2), px(400), px(450), pass(3), pass(2), pass(3)]),
+    skin: spec(SKINS.map((x) => ({ name: x.name })), [px(0), px(400), px(600), px(500), gem(25), gem(60), px(700), px(650), gem(40), px(800), px(750), px(600), pass(3), pass(2), px(900), pass(3), pass(3), pass(3), gem(40), gem(40), px(1500), gem(150), gem(90), gem(120)]),
+    hat: spec(HATS.map((n) => ({ name: n })), [px(0), px(150), gem(20), px(250), px(100), px(300), px(350), px(400), gem(15), px(300), px(350), px(200), px(250), px(300), px(200), px(500), pass(3), pass(3), px(400), px(350), pass(2), px(450), pass(3), px(900)]),
+    back: spec(BACKS.map((n) => ({ name: n })), [px(0), px(200), px(350), gem(30), px(500), px(250), px(300), px(350), pass(2), px(400), px(450), pass(3), pass(2), pass(3), px(1000)]),
     gskin: GSKINS.map((x, i) => Object.assign({ id: i, name: x.name, hex: x.color }, [px(0), px(300), px(300), px(400), gem(40), px(300), px(300), px(300), px(350), px(350), pass(2), px(400), gem(35), px(400), px(400), pass(3), pass(3)][i])),
     weapon: Object.keys(WEAPON_NAMES).map(Number).map((i) => Object.assign({ id: i, name: WEAPON_NAMES[i] }, { 0: px(0), 1: px(0), 2: px(0), 3: px(0), 4: px(0), 5: px(0), 15: px(150), 8: px(300), 9: px(500), 10: px(450), 11: px(400), 12: gem(25), 6: px(300), 7: gem(20), 13: gem(25), 14: gem(40), 16: px(350), 17: pass(2), 18: gem(30), 19: px(450), 20: px(550), 21: px(500), 22: px(450), 23: gem(30), 24: pass(3), 25: gem(25), 26: px(600), 27: pass(3), 28: gem(35), 29: gem(55), 30: px(500), 31: gem(80) }[i])),
     coll: (root.VColls ? root.VColls.LIST : []).map((c, i) => Object.assign({ id: i, name: c.name, r: c.r, desc: c.desc }, c.price.cur === 'pass' ? pass(c.r) : c.price.cur === 'gem' ? gem(c.price.n) : px(c.price.n))),
@@ -96,7 +97,17 @@
     if (!P.mis || P.mis.day !== day()) P.mis = { day: day(), prog: {}, claimed: {} };
     return P;
   }
-  function save() { P.rev = Date.now(); try { localStorage.setItem('va_prof2', JSON.stringify(P)); } catch (e) {} if (saveHook) { try { saveHook(); } catch (e) {} } }
+  // özel hesap: 'gencbaayy' adıyla bir kez elmas/PX ve tüm Gençbay seti verilir
+  const VIP = { gencbaayy: { gems: 2000, px: 25000, skin: [18, 19, 20, 21, 22, 23], hat: [23], back: [14], gold: 3 } };
+  function perks() {
+    const k = String(P.name || '').trim().toLowerCase(), v = VIP[k];
+    if (!v || (P.perks && P.perks[k])) return;
+    P.perks = Object.assign(P.perks || {}, { [k]: 1 });
+    P.gems += v.gems; P.px += v.px; P.crates.gold = (P.crates.gold || 0) + v.gold;
+    for (const t of ['skin', 'hat', 'back']) for (const id of v[t]) if (P.owned[t].indexOf(id) < 0) P.owned[t].push(id);
+    P.equip.skin = 23; P.equip.hat = 23; P.equip.back = 14;
+  }
+  function save() { perks(); P.rev = Date.now(); try { localStorage.setItem('va_prof2', JSON.stringify(P)); } catch (e) {} if (saveHook) { try { saveHook(); } catch (e) {} } }
   // bulut: sunucudaki kayıt daha yeniyse yerel profilin yerine geçer (kanca tetiklenmez)
   function importCloud(raw, rev) {
     if (!raw || typeof raw !== 'object') return false;

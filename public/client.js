@@ -133,6 +133,7 @@ function makeLabel(text, color) {
   s.scale.set(1.7, 0.42, 1); s.position.y = 2.3; return s;
 }
 function addHat(head, kind) {
+  if (kind === 23) { head.add(box(0.46, 0.07, 0.46, 0xffc107, 0, 0.1, 0), box(0.47, 0.025, 0.47, 0x111111, 0, 0.14, 0)); return; }
   if (kind === 1) head.add(box(0.44, 0.1, 0.44, 0xd32f2f, 0, 0.24, 0), box(0.4, 0.04, 0.22, 0xb71c1c, 0, 0.2, -0.3));
   else if (kind === 2) { head.add(box(0.42, 0.12, 0.42, 0xffd23f, 0, 0.26, 0)); for (const [x, z] of [[-0.15, -0.15], [0.15, -0.15], [-0.15, 0.15], [0.15, 0.15]]) head.add(box(0.07, 0.12, 0.07, 0xffd23f, x, 0.36, z)); }
   else if (kind === 3) head.add(box(0.47, 0.22, 0.47, 0x5a6b34, 0, 0.17, 0), box(0.1, 0.06, 0.2, 0x3e4a24, 0, 0.3, 0));
@@ -157,6 +158,7 @@ function addHat(head, kind) {
   else if (kind === 22) { head.add(box(0.44, 0.1, 0.44, 0xbdefff, 0, 0.26, 0)); for (const [x, z] of [[-0.17, -0.17], [0.17, -0.17], [-0.17, 0.17], [0.17, 0.17], [0, 0]]) { const m = new THREE.Mesh(blockGeo, basicMat(0x7df9ff)); m.scale.set(0.1, 0.22, 0.1); m.position.set(x, 0.42, z); m.rotation.y = 0.8; head.add(m); } }
 }
 function addBack(body, kind) {
+  if (kind === 14) { body.add(box(0.34, 0.34, 0.34, 0xe8742a, 0, 1.0, 0.3), box(0.36, 0.03, 0.36, 0x1a1a1a, 0, 1.0, 0.3), box(0.03, 0.36, 0.36, 0x1a1a1a, 0, 1.0, 0.3), box(0.36, 0.36, 0.03, 0x1a1a1a, 0, 1.0, 0.3)); return; }
   if (kind === 1) body.add(box(0.4, 0.5, 0.2, 0x6d4c41, 0, 1.05, 0.25), box(0.3, 0.2, 0.06, 0x4e342e, 0, 0.9, 0.37));
   else if (kind === 2) { const c = box(0.5, 0.85, 0.04, 0xb71c1c, 0, 0.92, 0.2); c.rotation.x = 0.12; body.add(c, box(0.56, 0.06, 0.08, 0xffd23f, 0, 1.38, 0.18)); }
   else if (kind === 3) for (const s of [-1, 1]) { const w = box(0.5, 0.75, 0.04, 0xf5f5f5, s * 0.42, 1.25, 0.2); w.rotation.z = s * 0.45; body.add(w); const w2 = box(0.3, 0.5, 0.04, 0xdadada, s * 0.62, 1.1, 0.2); w2.rotation.z = s * 0.7; body.add(w2); }
@@ -213,11 +215,12 @@ function makeAvatar(p) {
     case 'rainbow': [0xff1744, 0xff9100, 0xffea00, 0x00e676, 0x2979ff].forEach((c, i) => { const m = new THREE.Mesh(blockGeo, basicMat(c)); m.scale.set(0.57, 0.16, 0.32); m.position.set(0, 1.35 - i * 0.16, 0); body.add(m); }); break;
     case 'galaxy': for (const [x, y] of [[-0.15, 1.3], [0.1, 1.15], [-0.05, 0.95], [0.18, 0.85], [-0.2, 0.8]]) { const m = new THREE.Mesh(blockGeo, basicMat(0xffffff)); m.scale.set(0.05, 0.05, 0.02); m.position.set(x, y, -0.16); body.add(m); } head.add(box(0.05, 0.05, 0.02, 0xb388ff, 0.12, 0.12, -0.205)); break;
     case 'jersey': {
-      const [jm, jt] = sk.jc, D9 = ['111', '101', '111', '001', '111'], cell = 0.075;
+      const [jm, jt] = sk.jc, cell = 0.075, NUM = String(sk.num || '9');
+      const FONT = { 0: ['111', '101', '101', '101', '111'], 1: ['010', '110', '010', '010', '111'], 2: ['111', '001', '111', '100', '111'], 3: ['111', '001', '111', '001', '111'], 4: ['101', '101', '111', '001', '001'], 5: ['111', '100', '111', '001', '111'], 6: ['111', '100', '111', '101', '111'], 7: ['111', '001', '010', '010', '010'], 8: ['111', '101', '111', '101', '111'], 9: ['111', '101', '111', '001', '111'] };
       bx(0.6, 0.84, 0.34, jm, 0, 1.0, 0); bx(0.6, 0.05, 0.345, jt, 0, 1.4, 0); for (const s of [-1, 1]) bx(0.03, 0.84, 0.345, jt, s * 0.3, 1.0, 0);
       for (const lg of [l1, l2]) lg.add(box(0.27, 0.3, 0.29, jm, 0, -0.12, 0), box(0.275, 0.04, 0.295, jt, 0, -0.25, 0));
-      const digit = (z, mir, k, y0) => D9.forEach((row, r) => [...row].forEach((v, ci) => { if (v === '1') body.add(box(cell * k, cell * k, 0.02, jt, (mir ? -1 : 1) * (ci - 1) * cell * k, y0 + (2 - r) * cell * k, z)); }));
-      digit(0.185, false, 1.25, 1.0); digit(-0.185, true, 0.5, 1.22);
+      const digit = (z, mir, k, y0) => [...NUM].forEach((dch, di) => { const ox = (di - (NUM.length - 1) / 2) * 4 * cell * k * (mir ? -1 : 1); FONT[dch].forEach((row, r) => [...row].forEach((v, ci) => { if (v === '1') body.add(box(cell * k, cell * k, 0.02, jt, ox + (mir ? -1 : 1) * (ci - 1) * cell * k, y0 + (2 - r) * cell * k, z)); })); });
+      digit(0.185, false, NUM.length > 1 ? 0.9 : 1.25, 1.0); digit(-0.185, true, NUM.length > 1 ? 0.4 : 0.5, 1.22);
       if (sk.jn) { const nm = new THREE.Mesh(blockGeo, jerseyName(sk.jn, jt)); nm.scale.set(0.5, 0.09, 0.012); nm.position.set(0, 1.3, 0.182); body.add(nm); }
       head.add(box(0.43, 0.06, 0.43, jt, 0, 0.13, 0));
       break;
@@ -945,8 +948,9 @@ function menuFrame(t, dt) {
   if (!prev.drag) { prev.yaw += prev.vel * dt + dt * 0.15; prev.vel *= Math.max(0, 1 - dt * 3); }
   const a = prev.avatar;
   if (a) { a.group.rotation.y = prev.yaw; a.l1.rotation.x = Math.sin(t * 2) * 0.06; a.l2.rotation.x = -Math.sin(t * 2) * 0.06; a.head.rotation.y = Math.sin(t * 0.8) * 0.25; if (a.gun.children[0]) VW.flicker(a.gun.children[0], t); flickAvatar(a, t); }
-  camera.fov = 38; camera.updateProjectionMatrix();
-  camera.position.set(0, 1.55, 5.2); camera.rotation.set(-0.05, 0, 0);
+  const tp = innerHeight > innerWidth && innerWidth < 700 && /^(locker|shop)$/.test(document.body.dataset.tab || '');
+  camera.fov = tp ? 34 : 38; camera.updateProjectionMatrix();
+  camera.position.set(0, 1.55, tp ? 6.4 : 5.2); camera.rotation.set(tp ? -0.2 : -0.05, 0, 0);
   gunRoot.visible = false;
 }
 canvas.addEventListener('pointerdown', (e) => { if (!connected) { prev.drag = true; prev.lx = e.clientX; prev.vel = 0; } });

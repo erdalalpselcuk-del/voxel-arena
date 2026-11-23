@@ -61,7 +61,7 @@
   }
   function passClaimable() { const ps = D().pass, g = PR.passReached(); for (let i = 1; i <= g; i++) { if (!ps.claimed['f' + i] || (ps.premium && !ps.claimed['p' + i])) return true; } return false; }
   function buildNav() {
-    $('nav').innerHTML = NAV.map(([id, ic, nm]) => `<button data-nav="${id}" class="${id === tab ? 'sel' : ''}"><i>${ic}</i>${nm}<span class="dot ${(id === 'chat' && unread) || (id === 'pass' && passClaimable()) ? 'on' : ''}"></span></button>`).join('');
+    document.body.dataset.tab = tab; $('nav').innerHTML = NAV.map(([id, ic, nm]) => `<button data-nav="${id}" class="${id === tab ? 'sel' : ''}"><i>${ic}</i>${nm}<span class="dot ${(id === 'chat' && unread) || (id === 'pass' && passClaimable()) ? 'on' : ''}"></span></button>`).join('');
   }
   const MODE_INFO = {
     kc: ['Öldürdüklerinin künyesini topla, kendi künyeni alıp iptal et. 15 künyede biter.', ['TEK', '15 KÜNYE']],
@@ -152,7 +152,7 @@
     R(8, 21, 4, 6, '#2c3e50'); R(12, 21, 4, 6, '#2c3e50'); R(8, 26, 4, 1, '#1b2733'); R(12, 26, 4, 1, '#1b2733');
     R(7, 13, 10, 8, shirt); R(5, 13, 2, 7, shirt); R(17, 13, 2, 7, shirt); R(5, 19, 2, 2, head); R(17, 19, 2, 2, head);
     R(7, 20, 10, 1, 'rgba(0,0,0,.25)');
-    if (sk.pattern === 'jersey') { const m = icoHex(sk.jc[0]), t = icoHex(sk.jc[1]); R(7, 13, 10, 8, m); R(7, 13, 10, 1, t); R(7, 13, 1, 8, t); R(16, 13, 1, 8, t); R(8, 21, 4, 3, m); R(12, 21, 4, 3, m); R(8, 23, 4, 1, t); R(12, 23, 4, 1, t); R(10, 15, 4, 1, t); R(10, 16, 1, 1, t); R(13, 16, 1, 1, t); R(10, 17, 4, 1, t); R(13, 18, 1, 1, t); R(10, 19, 4, 1, t); }
+    if (sk.pattern === 'jersey') { const m = icoHex(sk.jc[0]), t = icoHex(sk.jc[1]); R(7, 13, 10, 8, m); R(7, 13, 10, 1, t); R(7, 13, 1, 8, t); R(16, 13, 1, 8, t); R(8, 21, 4, 3, m); R(12, 21, 4, 3, m); R(8, 23, 4, 1, t); R(12, 23, 4, 1, t); if (sk.num === '17') { R(9, 15, 1, 5, t); R(8, 16, 1, 1, t); R(11, 15, 4, 1, t); R(14, 16, 1, 1, t); R(13, 17, 1, 1, t); R(12, 18, 1, 2, t); } else { R(10, 15, 4, 1, t); R(10, 16, 1, 1, t); R(13, 16, 1, 1, t); R(10, 17, 4, 1, t); R(13, 18, 1, 1, t); R(10, 19, 4, 1, t); } }
     if (sk.pattern === 'maker') { R(7, 13, 10, 8, '#7a0f2a'); R(11, 13, 2, 8, '#ffd23f'); R(7, 13, 10, 2, '#f4f4f4'); R(7, 20, 10, 1, '#ffd23f'); }
     if (sk.pattern === 'flame') { R(7, 13, 10, 8, '#2a0d08'); R(9, 14, 1, 5, '#ff6a00'); R(12, 15, 1, 5, '#ff6a00'); R(15, 14, 1, 3, '#ff6a00'); }
     R(8, 5, 8, 8, head);
