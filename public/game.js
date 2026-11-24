@@ -174,12 +174,14 @@
     this.players.set(p.id, p);
     if (human) this.send(p.id, this.initMsg(p));
     this.broadcast({ t: 'join', player: this.pub(p) }, human ? p.id : 0);
+    if (human && this.rdy) setTimeout(() => { if (this.rdy) this.broadcast(this.rdyPub()); }, 400);
     return p;
   };
 
   G.removePlayer = function (id) {
     this.dropFlag(id);
     if (!this.players.delete(id)) return;
+    if (this.rdy) setTimeout(() => this.rdyCheck(), 50);
     this.broadcast({ t: 'leave', id });
     this.zomCheckLose();
   };
@@ -255,6 +257,20 @@
     if (p.human) this.send(p.id, { t: 'respawn', p: p.pos, owned: p.owned, gren: p.gren, w: p.w, sh: SPAWN_SHIELD });
   };
 
+
+  // ---------- hazırım (maç öncesi) ----------
+  G.readyOn = function (minH, wait) { this.rdy = { minH: minH || 1, dl: Date.now() + (wait || 90000) }; this.roundOver = true; };
+  G.rdyPub = function () { const l = [...this.players.values()].filter((q) => q.human).map((q) => ({ id: q.id, n: q.name, r: q.ready ? 1 : 0 })); return { t: 'rdy', on: this.rdy ? 1 : 0, l, min: this.rdy ? this.rdy.minH : 0, left: this.rdy ? Math.max(0, this.rdy.dl - Date.now()) : 0, mode: this.mode().name }; };
+  G.rdyCheck = function () {
+    if (!this.rdy) return;
+    const hs = [...this.players.values()].filter((q) => q.human);
+    if (hs.length >= this.rdy.minH && hs.every((q) => q.ready) || Date.now() > this.rdy.dl && hs.length) {
+      this.rdy = null; for (const q of hs) q.ready = false;
+      this.broadcast({ t: 'rdy', on: 0, l: [], min: 0, left: 0 });
+      this.roundOver = false; this.newRound(false);
+    } else this.broadcast(this.rdyPub());
+  };
+
   G.endRound = function (winner, forced) { // forced: zombi modunda 0 = insanlar kazandı, 1 = zombiler
     if (this.roundOver) return;
     this.roundOver = true;
@@ -262,10 +278,13 @@
     const nm = zom ? (forced === 0 ? 'Hayatta kalanlar' : 'Zombiler') : tm >= 0 ? TEAM_NAMES[tm] + ' takım' : winner.name;
     if (this.onEnd && this.mode().ranked && tm >= 0) { try { this.onEnd({ win: tm, players: [...this.players.values()].filter((q) => q.human && q.uid).map((q) => ({ uid: q.uid, team: q.team | 0, kills: q.kills | 0, deaths: q.deaths | 0 })) }); } catch (e) { console.error('[onEnd]', e.message); } }
     this.broadcast({ t: 'win', id: winner ? winner.id : 0, name: nm, team: tm, ts: this.tscore, zw: this.zw ? this.zw.n : 0 });
-    setTimeout(() => {
+    setTimeout(() => this.newRound(true), 7000);
+  };
+
+  G.newRound = function (rot) {
       const prevMode = this.modeKey;
       for (const p of [...this.players.values()]) if (p.z) this.removePlayer(p.id);
-      if (this.rotate) this.modeKey = MODE_ORDER[(MODE_ORDER.indexOf(this.modeKey) + 1) % MODE_ORDER.length];
+      if (rot && this.rotate) this.modeKey = MODE_ORDER[(MODE_ORDER.indexOf(this.modeKey) + 1) % MODE_ORDER.length];
       this.themeIdx = (this.themeIdx + 1) % VM.THEMES.length;
       this.newMap();
       if (prevMode === 'zom' || this.modeKey === 'zom') { let i = 0; for (const p of this.players.values()) p.team = this.modeKey === 'zom' ? (p.human ? 0 : 1) : i++ % 2; this.balanceBots(); }
@@ -273,7 +292,6 @@
       for (const p of this.players.values()) { p.score = 0; p.kills = 0; p.deaths = 0; p.pos = this.spawnFor(p); p.hp = 100; p.armor = 0; p.alive = true; p.vy = 0; this.loadout(p); }
       this.broadcast({ t: 'newround', seed: this.seed, theme: this.themeIdx, mode: this.modeKey, win: this.mode().win, label: this.mode().label, ts: this.tscore, fl: this.flagsPub(), zw: this.zwPub(),
         players: [...this.players.values()].map((p) => Object.assign(this.pub(p), { owned: p.owned, gren: p.gren })), pk: this.pk.map((k) => (k.on ? 1 : 0)) });
-    }, 7000);
   };
 
 
@@ -523,6 +541,7 @@
         break;
       }
       case 'back': p.shieldUntil = 0; break;
+      case 'ready': if (this.rdy) { p.ready = true; this.rdyCheck(); } break;
       case 'state': {
         if (!p.alive || this.roundOver) break;
         const np = [clamp(msg.p && msg.p[0], -5, VM.SIZE + 5, p.pos[0]), clamp(msg.p && msg.p[1], -5, VM.H + 5, p.pos[1]), clamp(msg.p && msg.p[2], -5, VM.SIZE + 5, p.pos[2])];
@@ -730,6 +749,7 @@
 
   G.step = function (dt) {
     const now = Date.now();
+    if (this.rdy && now - (this.rdyAt || 0) > 1000) { this.rdyAt = now; this.rdyCheck(); }
     for (const l of [...this.loot.values()]) if (now - l.born > LOOT_LIFE) { this.loot.delete(l.id); this.broadcast({ t: 'lootGone', id: l.id, kind: 'expire' }); }
     for (const tag of [...this.tags.values()]) if (now - tag.born > TAG_LIFE) { this.tags.delete(tag.id); this.broadcast({ t: 'tagGone', id: tag.id, kind: 'expire' }); }
     this.pk.forEach((k, i) => { if (!k.on && !k.disabled && now >= k.at) { k.on = true; this.broadcast({ t: 'pk', i, on: 1 }); } });

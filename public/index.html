@@ -82,6 +82,12 @@
   #board th,#board td{padding:3px 10px;text-align:right}
   #board th:first-child,#board td:first-child{text-align:left}
   #board tr.me td{color:var(--amber)}
+  #netb{position:fixed;top:6px;right:8px;z-index:5;font:700 12px var(--hud);background:rgba(0,0,0,.45);padding:2px 7px;border-radius:4px;pointer-events:none;display:none;letter-spacing:.5px}
+  body.touch #netb{top:calc(4px + env(safe-area-inset-top));right:auto;left:50%;transform:translateX(-50%);font-size:11px}
+  #rdyb{position:fixed;inset:0;z-index:7;align-items:center;justify-content:center;background:rgba(5,8,14,.72);font-family:var(--hud);text-align:center;color:#fff}
+  #rdyb .rb{background:#0e1626;border:3px solid #ffd24a;padding:18px 22px;max-width:92vw;min-width:260px}
+  #rdyb h3{margin:0 0 6px;font-size:22px;color:#ffd24a}#rdyb .rc{font-size:30px;font-weight:800;margin:6px 0}#rdyb .rm{font-size:13px;opacity:.75;margin:4px 0}
+  #rdyb .rl{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:8px 0 12px;max-height:30vh;overflow:auto}#rdyb .rl span{padding:3px 8px;background:rgba(255,255,255,.08);font-size:13px}#rdyb .rl .ok{background:rgba(80,220,120,.25);color:#7dff9a}
   #pause{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(5,8,14,.55);z-index:4;font-family:var(--pix);text-align:center;line-height:2;cursor:pointer}
   body.playing.paused #pause{display:flex}
 
@@ -583,6 +589,7 @@
   <div class="srow"><label for="pSens">Hassasiyet</label><input type="range" id="pSens" min="0.3" max="2.5" step="0.05"><output id="pSensV"></output></div>
   <div class="srow"><label for="pFov">Görüş (FOV)</label><input type="range" id="pFov" min="60" max="100" step="1"><output id="pFovV"></output></div>
   <div class="srow"><label for="pVol">Ses</label><input type="range" id="pVol" min="0" max="1" step="0.05"><output id="pVolV"></output></div>
+  <button class="btn" data-fs="1">&#9974; TAM EKRAN</button>
   <button class="btn warn" id="pMenu">ANA MENÜYE DÖN</button>
   <div class="phint">Devam etmek için butona veya ekrana tıkla</div>
 </div></div>

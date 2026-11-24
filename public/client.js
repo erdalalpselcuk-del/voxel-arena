@@ -479,6 +479,34 @@ function applyRound(m) {
 }
 function clearTags() { for (const m of tagMeshes.values()) scene.remove(m); tagMeshes.clear(); clearLoot(); }
 function clearProjs() { for (const m of projMeshes.values()) scene.remove(m); projMeshes.clear(); }
+
+// ---- ping / FPS göstergesi ----
+const netEl = document.createElement('div'); netEl.id = 'netb';
+document.body.appendChild(netEl);
+const nb = { n: 0, t0: performance.now(), fps: 0 };
+function netTick(now) {
+  nb.n++;
+  if (now - nb.t0 >= 1000) { nb.fps = Math.round(nb.n * 1000 / (now - nb.t0)); nb.n = 0; nb.t0 = now;
+    const on = S().net !== 0 && document.body.classList.contains('playing');
+    netEl.style.display = on ? 'block' : 'none';
+    if (on) { const pg = connected && gotRtt ? Math.round(rtt) : -1; netEl.innerHTML = '<span style="color:' + (nb.fps >= 50 ? '#7dff9a' : nb.fps >= 30 ? '#ffd24a' : '#ff6a5a') + '">' + nb.fps + ' FPS</span> <span style="color:' + (pg < 0 ? '#aaa' : pg < 70 ? '#7dff9a' : pg < 140 ? '#ffd24a' : '#ff6a5a') + '">' + (pg < 0 ? '--' : pg) + ' ms</span>'; } }
+}
+// ---- hazırım ----
+const rdyEl = document.createElement('div'); rdyEl.id = 'rdyb'; rdyEl.style.display = 'none';
+document.body.appendChild(rdyEl);
+rdyEl.addEventListener('click', (e) => { if (e.target.id === 'rdyGo') { send({ t: 'ready' }); e.target.disabled = true; e.target.textContent = 'BEKLENİYOR…'; } });
+let rdyLeft = 0, rdyAt0 = 0;
+function showReady(m) {
+  if (!m.on) { rdyEl.style.display = 'none'; return; }
+  rdyLeft = m.left; rdyAt0 = performance.now();
+  const n = m.l.filter((x) => x.r).length, mine = m.l.find((x) => x.id === myId), need = Math.max(m.min, m.l.length);
+  rdyEl.innerHTML = '<div class="rb"><h3>MAÇA HAZIR MISIN?</h3><div class="rm">' + (m.mode || '') + '</div><div class="rc">' + n + ' / ' + need + ' hazır</div><div class="rl">' +
+    m.l.map((x) => '<span class="' + (x.r ? 'ok' : '') + '">' + (x.r ? '\u2713 ' : '\u2026 ') + String(x.n).replace(/[<>&]/g, '') + '</span>').join('') + '</div>' +
+    '<button class="btn go" id="rdyGo"' + (mine && mine.r ? ' disabled>BEKLENİYOR…' : '>HAZIRIM') + '</button><div class="rm" id="rdyT"></div></div>';
+  rdyEl.style.display = 'flex';
+  if (document.pointerLockElement) try { document.exitPointerLock(); } catch (e) {}
+}
+setInterval(() => { const t = document.getElementById('rdyT'); if (t && rdyEl.style.display !== 'none') t.textContent = 'Otomatik başlama: ' + Math.max(0, Math.ceil((rdyLeft - (performance.now() - rdyAt0)) / 1000)) + ' sn'; }, 500);
 const now2 = () => performance.now(); let waitAt = 0, waitDiv = null;
 function waitEl() { if (!waitDiv) { waitDiv = document.createElement('div'); waitDiv.style.cssText = 'position:fixed;top:' + (TOUCH ? '64px' : '17%') + ';max-width:' + (TOUCH ? '46vw' : '90vw') + ';font-size:' + (TOUCH ? '11px' : '') + ';left:50%;transform:translateX(-50%);z-index:5;padding:8px 18px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.25);font:700 15px var(--hud,sans-serif);letter-spacing:.08em;color:#ffd23f;pointer-events:none;display:none'; waitDiv.textContent = 'GERÇEK OYUNCULAR BEKLENİYOR… (davet için oda kodunu paylaş)'; document.body.appendChild(waitDiv); } return waitDiv; }
 // künye: çerçeveli plaka, zincir, ışık sütunu ve yer halkası (kendi künyen kırmızı, düşmanınki altın)
@@ -634,6 +662,7 @@ function onMsg(m) {
       roundOver = true; if (m.ts) TS = m.ts; showMsg('', 0);
       showResults(m);
       break;
+    case 'rdy': showReady(m); break;
     case 'newround':
       MS = { kills: 0, deaths: 0, heads: 0 }; hideResults();
       applyRound(m); showMsg('', 0);
@@ -897,7 +926,7 @@ function animateViewmodel(dt, now, hv, alive) {
 const clock = { last: performance.now(), send: 0, board: 0, mini: 0 };
 const adapt = { n: 0, sum: 0, last0: 0 };
 function frame(now) {
-  requestAnimationFrame(frame);
+  requestAnimationFrame(frame); netTick(now);
   const dt = Math.min(0.05, (now - clock.last) / 1000); clock.last = now;
   if (document.body.classList.contains('playing')) { // adaptif çözünürlük: yavaşsa küçült, rahatsa büyüt
     adapt.n++; adapt.sum += (now - adapt.last0); adapt.last0 = now;

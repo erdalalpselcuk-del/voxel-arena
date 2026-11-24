@@ -39,6 +39,7 @@ function createRoom(opt) {
   };
   room.fixedMode = mode;
   room.game.fillBots(mode && MODES[mode].ranked ? 0 : cl(opt.bots, 0, room.game.cap(), Math.min(MIN_PLAYERS, room.game.cap())));
+  if (room.game.mode().ranked || opt.priv) room.game.readyOn(room.game.mode().ranked ? 2 : 1, 90000); // hazırım aşaması
   rooms.set(code, room);
   return room;
 }

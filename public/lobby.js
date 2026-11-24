@@ -426,6 +426,9 @@
       : `<span class="lab">HESAP</span><div class="phint" style="text-align:left">Kayıtsız oynuyorsun: ilerlemen yalnızca bu cihazda, sıralama/sohbet/arkadaş/kulüp/dereceli yok.</div><button class="btn" data-relogin="1">GİRİŞ YAP / KAYIT OL</button>`;
     setBody(acctBlock + `<span class="lab">TAKMA AD</span><div class="phint" style="text-align:left;margin:0">Üst çubuktaki kutudan değiştirebilirsin.</div><span class="lab">OYUN AYARLARI</span>
       ${'ontouchstart' in window ? `<div class="srow"><label for="sTs">Dokunmatik hassasiyet</label><input type="range" id="sTs" min="0.4" max="2.2" step="0.05" value="${s.tsens || 1}"><output id="sTsV">${(+(s.tsens || 1)).toFixed(2)}</output></div>` : ''}
+      <div class="srow"><label for="sNet">Ping / FPS göstergesi</label><select id="sNet" style="flex:1;padding:6px;background:#0b1220;color:#fff;border:2px solid rgba(255,255,255,.2);font:600 14px var(--hud)"><option value="1" ${s.net === 0 ? '' : 'selected'}>Açık</option><option value="0" ${s.net === 0 ? 'selected' : ''}>Kapalı</option></select></div>
+      <div class="srow"><label>Ekran</label><button class="mini alt" data-fs="1" style="flex:1">⛶ Tam ekran yap</button></div>
+      ${window.matchMedia && matchMedia('(display-mode: standalone)').matches ? '' : '<div class="phint" style="text-align:left;margin:0 0 6px">iPhone/iPad: tarayıcıda tam ekran yok. <b>Paylaş \u2192 Ana Ekrana Ekle</b> dersen oyun uygulama gibi tam ekran açılır. Android: Tam ekran butonu veya <b>Uygulamayı yükle</b>.</div><button class="mini alt" data-inst="1" id="sInst" style="display:none">\u2B07 Uygulamayı yükle</button>'}
       <div class="srow"><label for="sGfx">Grafik</label><select id="sGfx" style="flex:1;padding:6px;background:#0b1220;color:#fff;border:2px solid rgba(255,255,255,.2);font:600 14px var(--hud)">${['Otomatik (önerilen)', 'Düşük (en akıcı)', 'Orta', 'Yüksek'].map((n, i) => `<option value="${i}" ${(s.gfx | 0) === i ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
       <div class="srow"><label for="sSens">Hassasiyet</label><input type="range" id="sSens" min="0.3" max="2.5" step="0.05" value="${s.sens}"><output id="sSensV">${(+s.sens).toFixed(2)}</output></div>
       <div class="srow"><label for="sFov">Görüş (FOV)</label><input type="range" id="sFov" min="60" max="100" step="1" value="${s.fov}"><output id="sFovV">${s.fov}</output></div>
@@ -590,9 +593,24 @@
     else if (d.refrooms) loadRooms();
     else if (d.reset) { if (confirm('Tüm ilerleme silinsin mi?')) { PR.reset(); resetPreview(); render(); buildSel(); } }
   });
+  // tam ekran + kurulum
+  let instEv = null;
+  window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); instEv = e; const b = document.getElementById('sInst'); if (b) b.style.display = ''; });
+  function toggleFull() {
+    const d = document.documentElement;
+    if (document.fullscreenElement || document.webkitFullscreenElement) { (document.exitFullscreen || document.webkitExitFullscreen).call(document); return; }
+    const rq = d.requestFullscreen || d.webkitRequestFullscreen;
+    if (rq) { try { const r = rq.call(d); if (r && r.catch) r.catch(() => {}); } catch (e) {} if (window.VTouch) VTouch.enterFull(); }
+    else alert('Bu tarayıcı tam ekranı desteklemiyor (iPhone). Paylaş \u2192 "Ana Ekrana Ekle" de, oyunu oradan aç: tam ekran olur.');
+  }
+  window.VFull = toggleFull;
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest && e.target.closest('[data-fs],[data-inst]'); if (!t) return;
+    if (t.dataset.fs) toggleFull(); else if (instEv) { instEv.prompt(); instEv = null; t.style.display = 'none'; }
+  });
   $('sidebody').addEventListener('input', (e) => {
     const id = e.target.id, v = +e.target.value, s = D().settings;
-    if (id === 'sGfx') { s.gfx = v; } else if (id === 'sTs') { s.tsens = v; $('sTsV').textContent = v.toFixed(2); } else if (id === 'sSens') { s.sens = v; $('sSensV').textContent = v.toFixed(2); } else if (id === 'sFov') { s.fov = v; $('sFovV').textContent = v; } else if (id === 'sVol') { s.vol = v; $('sVolV').textContent = Math.round(v * 100); VA.setVolume(v); } else return;
+    if (id === 'sNet') { s.net = v; } else if (id === 'sGfx') { s.gfx = v; } else if (id === 'sTs') { s.tsens = v; $('sTsV').textContent = v.toFixed(2); } else if (id === 'sSens') { s.sens = v; $('sSensV').textContent = v.toFixed(2); } else if (id === 'sFov') { s.fov = v; $('sFovV').textContent = v; } else if (id === 'sVol') { s.vol = v; $('sVolV').textContent = Math.round(v * 100); VA.setVolume(v); } else return;
     PR.save();
   });
 
