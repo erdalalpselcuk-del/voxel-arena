@@ -10,6 +10,6 @@ markup=re.sub(r'<script src="[^"]+"></script>\s*','',body)
 js=lambda f: open(root+f,encoding='utf-8').read()
 parts=['window.LOCAL_BUILD=true;',js('map.js'),js('colls.js'),js('game.js'),js('localserver.js'),js('profile.js'),js('net.js'),js('weapons.js'),js('client.js'),js('touch.js'),js('lobby.js'),js('intro.js')]
 three='<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>'
-out='<title>BLOKSAVAŞ</title>\n<meta name="claude:viewport-fit-sides" content="cover">\n'+fonts+'\n'+style+'\n'+markup+'\n'+three+'\n'+''.join('<script>'+p.replace('</script>','<\\/script>')+'</script>\n' for p in parts)
+out='<title>PIXELFRONT</title>\n<meta name="claude:viewport-fit-sides" content="cover">\n'+fonts+'\n'+style+'\n'+markup+'\n'+three+'\n'+''.join('<script>'+p.replace('</script>','<\\/script>')+'</script>\n' for p in parts)
 open(S+'web.html','w',encoding='utf-8').write(out)
 print('web.html',len(out))
