@@ -83,6 +83,7 @@
   press('tNext', () => cycleWeapon(1));
   press('tPrev', () => cycleWeapon(-1));
   press('tNade', () => throwNade());
+  press('tKnife', () => T.quickMelee());
   press('tDash', () => dash());
   press('tBoard', () => { const b = $('board'); const show = b.style.display !== 'block'; b.style.display = show ? 'block' : 'none'; if (show) refreshBoard(); });
   press('tMenu', () => { onLockChange(false); });

@@ -10,15 +10,18 @@ const S = () => PR.data.settings;
 // ---------- sahne ----------
 const canvas = $('gl');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+const COARSE = (() => { try { return matchMedia('(pointer: coarse)').matches; } catch (e) { return false; } })();
+let pixCap = COARSE ? 1 : 1.5, pixNow = Math.min(window.devicePixelRatio || 1, pixCap); // telefonda 1.0'dan başlar, FPS'e göre uyar
+renderer.setPixelRatio(pixNow);
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, 1, 0.05, 220);
 camera.rotation.order = 'YXZ';
 scene.add(camera);
 const amb = new THREE.AmbientLight(0xffffff, 0.7); scene.add(amb);
 const sun = new THREE.DirectionalLight(0xffffff, 0.75); sun.position.set(30, 60, 20); scene.add(sun);
-function resize() { renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); }
-addEventListener('resize', resize); resize();
+function resize() { const vv = window.visualViewport, w = Math.round(vv ? vv.width : innerWidth), h = Math.round(vv ? vv.height : innerHeight); renderer.setSize(w, h, false); innerW = w; innerH = h; camera.aspect = w / h; camera.updateProjectionMatrix(); }
+let innerW = innerWidth, innerH = innerHeight;
+addEventListener('resize', resize); addEventListener('orientationchange', () => setTimeout(resize, 250)); if (window.visualViewport) visualViewport.addEventListener('resize', resize); resize();
 
 const THEME_VIS = [
   { sky: 0x8ecbff, fog: [0x8ecbff, 32, 100], amb: 0xffffff, ambI: 0.72, sun: 0xfff3d6, sunI: 0.75, sunPos: [30, 60, 20], clouds: true,
@@ -392,9 +395,10 @@ function buildWbar() {
   SLOTS.forEach((s, i) => {
     const own = s.filter((w) => me.owned.indexOf(w) >= 0); if (!own.length) return;
     const cur = own.indexOf(me.w) >= 0 ? me.w : own[0];
-    html += `<div class="ws${cur === me.w ? ' sel' : ''}"><b>${i + 1}</b>${esc(WP[cur].name)}</div>`;
+    html += `<div class="ws${cur === me.w ? ' sel' : ''}" data-i="${i}"><b>${i + 1}</b>${esc(WP[cur].name)}</div>`;
   });
   $('wbar').innerHTML = html;
+  $('wbar').querySelectorAll('.ws').forEach((el, i) => { el.onpointerdown = (ev) => { ev.preventDefault(); ev.stopPropagation(); const idx = +el.dataset.i; if (me.alive && !paused) cycleSlot(idx); }; });
 }
 function refreshHud() {
   setTxt('hp', String(Math.max(0, Math.round(me.hp)))); setTxt('ar', String(Math.round(me.armor)));
@@ -786,6 +790,13 @@ function dash() {
 }
 
 // ---------- girdi ----------
+if (TOUCH) { addEventListener('contextmenu', (e) => e.preventDefault()); addEventListener('touchstart', () => { try { ac(); if (actx && actx.state === 'suspended') actx.resume(); } catch (e) {} }, { passive: true }); }
+let prevW = -1;
+function quickMelee() { // bıçağa geç / önceki silaha dön
+  if (!me.alive) return;
+  if (WP[me.w].kind === 'melee') { if (prevW >= 0 && me.owned.indexOf(prevW) >= 0) setWeapon(prevW); return; }
+  const m = SLOTS[0].find((w) => me.owned.indexOf(w) >= 0); if (m != null) { prevW = me.w; setWeapon(m); }
+}
 addEventListener('keydown', (e) => {
   const tag = e.target && e.target.tagName;
   if (tag === 'INPUT' || tag === 'TEXTAREA') return;
@@ -797,6 +808,7 @@ addEventListener('keydown', (e) => {
   if (e.code === 'KeyR') reload();
   else if (e.code === 'KeyG') throwNade();
   else if (e.code === 'KeyQ' || e.code === 'KeyX') dash();
+  else if (e.code === 'KeyV') quickMelee();
   else { const n = parseInt(e.key, 10); if (n >= 1 && n <= SLOTS.length) cycleSlot(n - 1); }
 });
 addEventListener('keyup', (e) => { keys[e.code] = false; if (e.code === 'Tab') $('board').style.display = 'none'; });
@@ -883,9 +895,17 @@ function animateViewmodel(dt, now, hv, alive) {
 
 // ---------- ana döngü ----------
 const clock = { last: performance.now(), send: 0, board: 0, mini: 0 };
+const adapt = { n: 0, sum: 0, last0: 0 };
 function frame(now) {
   requestAnimationFrame(frame);
   const dt = Math.min(0.05, (now - clock.last) / 1000); clock.last = now;
+  if (document.body.classList.contains('playing')) { // adaptif çözünürlük: yavaşsa küçült, rahatsa büyüt
+    adapt.n++; adapt.sum += (now - adapt.last0); adapt.last0 = now;
+    if (adapt.n >= 90) { const avg = adapt.sum / adapt.n, gq = S().gfx | 0; adapt.n = 0; adapt.sum = 0;
+      const top = gq === 1 ? 0.75 : gq === 2 ? 1 : gq === 3 ? Math.min(window.devicePixelRatio || 1, 1.5) : pixCap;
+      let np = pixNow; if (gq === 0 || gq === 1 && false) { if (avg > 26) np = Math.max(0.55, pixNow - 0.15); else if (avg < 15) np = Math.min(top, pixNow + 0.1); } else np = top;
+      if (Math.abs(np - pixNow) > 0.01) { pixNow = np; renderer.setPixelRatio(pixNow); resize(); } }
+  } else adapt.last0 = now;
   const t = now / 1000;
   clouds.children.forEach((c, i) => { c.position.x += dt * (0.8 + (i % 3) * 0.3); if (c.position.x > 90) c.position.x = -90; });
   if (!connected || !M) { if (!document.body.classList.contains('playing')) menuFrame(t, dt); renderer.render(scene, camera); return; }
@@ -1039,7 +1059,7 @@ const VA = {
 };
 VA.dbg = { get: () => ({ MODE, FL, flags: flagG.length, bases: baseG.length, myId, team: myTeam(), TS, zombie: typeof ZW !== 'undefined' ? ZW : null }), onMsg };
 // touch.js için denetimli erişim (client.js bir IIFE içinde)
-VA.T = { TOUCH, tj, keys, WP, S, me, get locked() { return locked; }, get paused() { return paused; }, set mouseDown(v) { mouseDown = v; }, tryFire, setZoom, reload, cycleWeapon, throwNade, dash, refreshBoard, onLockChange, setWeapon, $ };
+VA.T = { quickMelee, TOUCH, tj, keys, WP, S, me, get locked() { return locked; }, get paused() { return paused; }, set mouseDown(v) { mouseDown = v; }, tryFire, setZoom, reload, cycleWeapon, throwNade, dash, refreshBoard, onLockChange, setWeapon, $ };
 window.VA = VA;
 requestAnimationFrame(frame);
 })();

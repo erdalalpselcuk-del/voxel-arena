@@ -426,6 +426,7 @@
       : `<span class="lab">HESAP</span><div class="phint" style="text-align:left">Kayıtsız oynuyorsun: ilerlemen yalnızca bu cihazda, sıralama/sohbet/arkadaş/kulüp/dereceli yok.</div><button class="btn" data-relogin="1">GİRİŞ YAP / KAYIT OL</button>`;
     setBody(acctBlock + `<span class="lab">TAKMA AD</span><div class="phint" style="text-align:left;margin:0">Üst çubuktaki kutudan değiştirebilirsin.</div><span class="lab">OYUN AYARLARI</span>
       ${'ontouchstart' in window ? `<div class="srow"><label for="sTs">Dokunmatik hassasiyet</label><input type="range" id="sTs" min="0.4" max="2.2" step="0.05" value="${s.tsens || 1}"><output id="sTsV">${(+(s.tsens || 1)).toFixed(2)}</output></div>` : ''}
+      <div class="srow"><label for="sGfx">Grafik</label><select id="sGfx" style="flex:1;padding:6px;background:#0b1220;color:#fff;border:2px solid rgba(255,255,255,.2);font:600 14px var(--hud)">${['Otomatik (önerilen)', 'Düşük (en akıcı)', 'Orta', 'Yüksek'].map((n, i) => `<option value="${i}" ${(s.gfx | 0) === i ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
       <div class="srow"><label for="sSens">Hassasiyet</label><input type="range" id="sSens" min="0.3" max="2.5" step="0.05" value="${s.sens}"><output id="sSensV">${(+s.sens).toFixed(2)}</output></div>
       <div class="srow"><label for="sFov">Görüş (FOV)</label><input type="range" id="sFov" min="60" max="100" step="1" value="${s.fov}"><output id="sFovV">${s.fov}</output></div>
       <div class="srow"><label for="sVol">Ses</label><input type="range" id="sVol" min="0" max="1" step="0.05" value="${s.vol}"><output id="sVolV">${Math.round(s.vol * 100)}</output></div>
@@ -591,7 +592,7 @@
   });
   $('sidebody').addEventListener('input', (e) => {
     const id = e.target.id, v = +e.target.value, s = D().settings;
-    if (id === 'sTs') { s.tsens = v; $('sTsV').textContent = v.toFixed(2); } else if (id === 'sSens') { s.sens = v; $('sSensV').textContent = v.toFixed(2); } else if (id === 'sFov') { s.fov = v; $('sFovV').textContent = v; } else if (id === 'sVol') { s.vol = v; $('sVolV').textContent = Math.round(v * 100); VA.setVolume(v); } else return;
+    if (id === 'sGfx') { s.gfx = v; } else if (id === 'sTs') { s.tsens = v; $('sTsV').textContent = v.toFixed(2); } else if (id === 'sSens') { s.sens = v; $('sSensV').textContent = v.toFixed(2); } else if (id === 'sFov') { s.fov = v; $('sFovV').textContent = v; } else if (id === 'sVol') { s.vol = v; $('sVolV').textContent = Math.round(v * 100); VA.setVolume(v); } else return;
     PR.save();
   });
 

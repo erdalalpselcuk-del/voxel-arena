@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 3000;
 const MIN_PLAYERS = +(process.env.MIN_PLAYERS || 4); // herkese açık odalarda botlarla doldurulan toplam oyuncu (0 = bot yok)
 const MAX_PLAYERS = 32, MAX_ROOMS = +(process.env.MAX_ROOMS || 40), MAX_PER_IP = +(process.env.MAX_PER_IP || 8);
 const EMPTY_MS = 30000; // son insan çıkınca oda bu kadar sonra kapanır
-const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css', '.png': 'image/png', '.ico': 'image/x-icon', '.svg': 'image/svg+xml', '.json': 'application/json' };
+const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css', '.png': 'image/png', '.ico': 'image/x-icon', '.svg': 'image/svg+xml', '.json': 'application/json', '.webmanifest': 'application/manifest+json' };
 const PUBLIC = path.join(__dirname, 'public');
 
 const rooms = new Map(); // kod -> oda
