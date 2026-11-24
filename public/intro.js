@@ -15,7 +15,7 @@
   const done = () => { box.classList.add('out'); setTimeout(() => box.remove(), 900); };
   if (/[?&]nointro\b/.test(location.search)) { box.remove(); return; }
   // yapımcı adı: harf harf altın animasyon
-  const nm = $('iName'); 'ERDAL ALP SELÇUK'.split('').forEach((ch, i) => { const s = document.createElement('span'); s.textContent = ch === ' ' ? ' ' : ch; if (ch === ' ') s.className = 'sp'; s.style.setProperty('--i', i); nm.appendChild(s); });
+  const nm = $('iName'); 'ERDAL BAKKAL'.split('').forEach((ch, i) => { const s = document.createElement('span'); s.textContent = ch === ' ' ? ' ' : ch; if (ch === ' ') s.className = 'sp'; s.style.setProperty('--i', i); nm.appendChild(s); });
   // yükselen altın kıvılcımlar
   for (let i = 0; i < 38; i++) { const s = document.createElement('i'); s.className = 'spk'; s.style.left = Math.random() * 100 + '%'; s.style.animationDuration = 5 + Math.random() * 7 + 's'; s.style.animationDelay = -Math.random() * 10 + 's'; const z = 3 + Math.random() * 6; s.style.width = s.style.height = z + 'px'; s.style.opacity = 0; box.appendChild(s); }
   let stage = 'A';

@@ -107,10 +107,10 @@ Sürekli açık kalma için bkz. **DEPLOY.md** (Fly.io, VPS + systemd + Caddy, R
 
 ## Mobil, giriş ekranı ve yeni skin paketleri
 - **Mobil**: dokunmatik cihazda otomatik açılır (`?touch=1` ile zorlanır). Sol yarı kayan joystick (tam çekince koşu), sağ yarı bakış, ATEŞ/ZIPLA/EĞİL/NİŞAN/ŞARJÖR/BOMBA/ATIL düğmeleri, tam ekran + yatay kilit. Dikeyde "telefonu yatay çevir" uyarısı.
-- **Giriş (intro)**: taçlı logo, altın harflerle animasyonlu "Erdal Alp Selçuk" yapımcı yazısı, ardından isim girişi. `?nointro` ile atlanır.
+- **Giriş (intro)**: taçlı logo, altın harflerle animasyonlu "Erdal Bakkal" yapımcı yazısı, ardından isim girişi. `?nointro` ile atlanır.
 - **Yeni skinler**: Basket forması #9 "GENÇBAY" (3 renk), Yapımcı (altın taç), Alevli karakter; alevli/neon silah koleksiyonları (Cehennem Alevi, Mavi Alev, Ateş Topu, Kral, Smaç, Zehir, Okyanus, Hazine Avcısı, Neon Gökkuşağı). Sunucu skin indeksini sınırlar, herkes birbirinin skinini görür.
 - **Gençbay #17 seti**: forma numarası 17 (Sarı/Lacivert/Kırmızı/Özel), Basket Bandı (şapka), Basket Topu (sırt). Oyuncu adı `gencbaayy` olan hesaba (2 kademe) toplam 10000 elmas, 125000 PX, 8 altın kasa, tüm set ve 5 Gençbay silah koleksiyonu verilir (`profile.js` → `VIP`).
-- Oyuncu adı `Erdal` veya `Erdal Alp Selçuk` olan hesaba aynı paket verilir.
+- Oyuncu adı `Erdal` veya `Erdal Bakkal` olan hesaba aynı paket verilir.
 - **Telefon dikey menü**: ikonlu sekmeler, tam genişlik OYNA, mod/harita satırı, Dolap/Mağazada karakter önizlemesi üstte.
 
 ## Hesap sistemi, dereceli maç, yeni modlar
