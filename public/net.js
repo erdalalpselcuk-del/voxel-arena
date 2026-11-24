@@ -79,12 +79,14 @@
       case 'club': applyClub(m.club); S.members = m.members || []; if (m.cchat) S.cchat = m.cchat.map(mark); emit('club'); break;
       case 'err': S.err = m.m || ''; emit('err', S.err); break;
       case 'saved': emit('saved'); break;
-      case 'auth': { lsSet('va_token', m.token); S.authErr = ''; if (!m.reg) PR.data.rev = 0; if (m.user) { PR.data.name = m.user; try { localStorage.setItem('va_prof2', JSON.stringify(PR.data)); } catch (e) {} } S.status = 'off'; tries = 0; refresh(); emit('auth', m.user); break; }
+      case 'auth': { if (m.rec) S.rec = m.rec; lsSet('va_token', m.token); S.authErr = ''; if (!m.reg) PR.data.rev = 0; if (m.user) { PR.data.name = m.user; try { localStorage.setItem('va_prof2', JSON.stringify(PR.data)); } catch (e) {} } S.status = 'off'; tries = 0; refresh(); emit('auth', m.user); break; }
       case 'mmr': S.mmr = m.mmr; S.rank = m.rank; S.dmmr = m.d; emit('mmr', m); break;
       case 'fr': S.fr = m; emit('fr'); break;
       case 'party': S.party = m.id ? m : null; emit('party'); if (m.go) emit('partygo', m.go); break;
       case 'party.inv': S.invites = S.invites.filter((x) => x.pid !== m.pid).concat([{ pid: m.pid, from: m.from }]).slice(-5); emit('invite', m); break;
-      case 'note': emit('note', m.m); break;
+      case 'note': emit('note', m.m); if (m.out) { try { localStorage.removeItem('va_prof2'); } catch (e) {} lsSet('va_token', ''); location.reload(); } if (m.ref) emit('sesref'); break;
+      case 'rec': S.rec = m.rec; emit('rec', m.rec); break;
+      case 'sessions': S.sess = m; emit('sessions'); break;
       case 'autherr': S.authErr = m.m || 'Hata'; emit('autherr', S.authErr); break;
       case 'kicked': S.status = 'kicked'; badge(); emit('status'); break;
     }
@@ -122,6 +124,11 @@
       try { localStorage.setItem('va_prof2', JSON.stringify(PR.data)); } catch (e) {}
       S.status = 'off'; refresh(); return true;
     },
+    reset(user, code, np) { S.authErr = ''; send({ t: 'reset', user, code, np }); },
+    sessions() { send({ t: 'sessions', cur: lsGet('va_token') }); },
+    kick(id) { send({ t: 'kick', id, cur: lsGet('va_token') }); },
+    logoutAll() { send({ t: 'logoutall', cur: lsGet('va_token') }); },
+    recGen(op) { send({ t: 'recgen', op, cur: lsGet('va_token') }); },
     changePass(op, np) { S.authErr = ''; send({ t: 'pw', op, np, cur: lsGet('va_token') }); },
     friends() { send({ t: 'fr.list' }); },
     addFriend(user) { send({ t: 'fr.add', user }); }, acceptFriend(id) { send({ t: 'fr.accept', id }); }, declineFriend(id) { send({ t: 'fr.decline', id }); }, removeFriend(id) { send({ t: 'fr.remove', id }); },

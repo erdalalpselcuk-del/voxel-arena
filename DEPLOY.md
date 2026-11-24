@@ -1,4 +1,4 @@
-# Voxel Arena: Sürekli Açık Sunucu Kurulumu
+# BLOKSAVAŞ: Sürekli Açık Sunucu Kurulumu
 
 Sohbet, sıralama, kulüpler ve çok oyunculu odalar **tek bir Node.js sunucusunda** çalışır. Bilgisayarın kapanınca ya da barındırma uyuyunca bunlar da durur. "Gerçek ve sürekli" olması için sunucunun 7/24 çalışan bir yerde durması gerekir.
 

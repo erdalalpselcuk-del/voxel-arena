@@ -28,7 +28,33 @@ const userOk = (s) => /^[A-Za-z0-9_çğıöşüÇĞİÖŞÜ.-]{3,16}$/.test(s);
 const hashPw = (pw, salt) => crypto.scryptSync(String(pw), salt, 32).toString('hex');
 const attempts = new Map(); // ip|kullanıcı -> {n, t}
 function tooMany(key) { const now = Date.now(), a = attempts.get(key); if (!a || now - a.t > 600000) { attempts.set(key, { n: 1, t: now }); return false; } a.n++; return a.n > 8; }
-function newSession(uid) { const tok = crypto.randomBytes(24).toString('hex'); db.sess[store.idOf(tok)] = uid; return tok; }
+function newSession(uid, ctx) {
+  const tok = crypto.randomBytes(24).toString('hex'), id = store.idOf(tok); db.sess[id] = uid;
+  const ua = ctx && ctx.ua ? String(ctx.ua) : '', dev = /iPhone|iPad/.test(ua) ? 'iPhone/iPad' : /Android/.test(ua) ? 'Android' : /Windows/.test(ua) ? 'Windows' : /Mac/.test(ua) ? 'Mac' : /Linux/.test(ua) ? 'Linux' : 'Cihaz';
+  db.smeta[id] = { t: Date.now(), dev, br: /Edg/.test(ua) ? 'Edge' : /Chrome|CriOS/.test(ua) ? 'Chrome' : /Firefox/.test(ua) ? 'Firefox' : /Safari/.test(ua) ? 'Safari' : '' };
+  return tok;
+}
+const COMMON = ['123456', '1234567', '12345678', '123456789', '1234567890', 'password', 'qwerty', 'qwerty123', 'abc123', 'iloveyou', '11111111', '00000000', 'sifre123', 'parola123', 'password1', 'galatasaray', 'fenerbahce', 'besiktas', 'trabzonspor', 'gencbay'];
+function pwBad(pw, user) { // güçlü parola şartı (kayıt, sıfırlama, değiştirme)
+  pw = String(pw || ''); const low = pw.toLowerCase();
+  if (pw.length < 8) return 'Parola en az 8 karakter olmalı';
+  if (pw.length > 64) return 'Parola en çok 64 karakter';
+  if (/^(.)\1+$/.test(pw) || COMMON.some((c) => low === c || low.replace(/\d+$/, '') === c)) return 'Bu parola çok kolay tahmin edilir, başka bir tane seç';
+  if (user && user.length >= 3 && low.includes(String(user).toLowerCase())) return 'Parola kullanıcı adını içermemeli';
+  if (!(/[a-zA-ZçğıöşüÇĞİÖŞÜ]/.test(pw) && /\d/.test(pw)) && pw.length < 12) return 'Parola harf ve rakam içermeli (ya da 12+ karakter)';
+  return '';
+}
+const REC_AL = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+function newRecovery(a) { // kurtarma kodu: yalnızca özeti saklanır, düz hali bir kez gösterilir
+  let c = ''; const b = crypto.randomBytes(12); for (let i = 0; i < 12; i++) c += REC_AL[b[i] % REC_AL.length];
+  const code = c.slice(0, 4) + '-' + c.slice(4, 8) + '-' + c.slice(8);
+  a.rsalt = crypto.randomBytes(16).toString('hex'); a.rhash = hashPw(c, a.rsalt); return code;
+}
+function recOk(a, code) {
+  if (!a || !a.rhash) return false; const c = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const h = Buffer.from(hashPw(c, a.rsalt), 'hex'), ok = Buffer.from(a.rhash, 'hex'); return h.length === ok.length && crypto.timingSafeEqual(h, ok);
+}
+function killSessions(uid, keepId) { for (const k of Object.keys(db.sess)) if (db.sess[k] === uid && k !== keepId) { delete db.sess[k]; delete db.smeta[k]; } }
 const rankName = (m) => (m < 900 ? 'Bronz' : m < 1100 ? 'Gümüş' : m < 1300 ? 'Altın' : m < 1500 ? 'Platin' : 'Elmas');
 function verify(tok) { // oyun odasına gelen oturum jetonunu doğrula (yalnızca giriş yapmış hesaplar)
   tok = String(tok || ''); if (tok.length < 16 || tok.length > 80) return null;
@@ -42,15 +68,17 @@ function rankResult(uid, won, kills) {
   const x = conns.get(uid); if (x) send(x.ws, { t: 'mmr', mmr: u.mmr, d, rank: rankName(u.mmr) });
 }
 function authMsg(ctx, msg) {
+  let rec = '';
   const { ws } = ctx, user = clean(msg.user, 16), pw = String(msg.pass == null ? '' : msg.pass), key = user.toLowerCase();
   if (tooMany(ctx.ip + '|' + msg.t) || tooMany('u|' + key)) return send(ws, { t: 'autherr', m: 'Çok fazla deneme. 10 dakika sonra tekrar dene.' });
   if (!userOk(user)) return send(ws, { t: 'autherr', m: 'Kullanıcı adı 3-16 harf/rakam olmalı (boşluk yok)' });
   if (pw.length < 6 || pw.length > 64) return send(ws, { t: 'autherr', m: 'Parola 6-64 karakter olmalı' });
   if (msg.t === 'reg') {
+    const bad = pwBad(pw, user); if (bad) return send(ws, { t: 'autherr', m: bad });
     if (db.accts[key]) return send(ws, { t: 'autherr', m: 'Bu kullanıcı adı alınmış' });
     if (VIP_USERS.indexOf(key) >= 0 && (!VIP_CODE || String(msg.code || '') !== VIP_CODE)) return send(ws, { t: 'autherr', m: 'Bu ad ayrılmış (kayıt kodu gerekli)' });
     const salt = crypto.randomBytes(16).toString('hex'), uid = 'a' + crypto.randomBytes(11).toString('hex');
-    db.accts[key] = { name: user, salt, hash: hashPw(pw, salt), uid, created: Date.now() };
+    db.accts[key] = { name: user, salt, hash: hashPw(pw, salt), uid, created: Date.now() }; rec = newRecovery(db.accts[key]);
     // misafir ilerlemesini taşı: o anki bağlantının kullanıcı kaydı yeni hesaba kopyalanır
     const g = ctx.uid && db.users[ctx.uid];
     db.users[uid] = { id: uid, name: user, created: Date.now(), rev: g ? g.rev : 0, profile: g ? g.profile : null, stats: g ? g.stats : null, club: '' };
@@ -60,7 +88,7 @@ function authMsg(ctx, msg) {
     if (h.length !== ok.length || !crypto.timingSafeEqual(h, ok)) return send(ws, { t: 'autherr', m: 'Parola yanlış' });
   }
   const a = db.accts[key]; store.touch();
-  send(ws, { t: 'auth', token: newSession(a.uid), user: a.name, reg: msg.t === 'reg' ? 1 : 0 });
+  send(ws, { t: 'auth', token: newSession(a.uid, ctx), user: a.name, reg: msg.t === 'reg' ? 1 : 0, rec });
 }
 
 
@@ -190,6 +218,15 @@ function onMessage(ctx, msg) {
   const { ws } = ctx;
   if (!msg || typeof msg.t !== 'string') return;
   if (msg.t === 'reg' || msg.t === 'login') return authMsg(ctx, msg);
+  if (msg.t === 'reset') { // şifremi unuttum: kurtarma kodu + yeni parola
+    const user = clean(msg.user, 16), key = user.toLowerCase(), a = db.accts[key], np = String(msg.np == null ? '' : msg.np);
+    if (tooMany('rs|' + ctx.ip) || tooMany('rs|' + key)) return send(ws, { t: 'autherr', m: 'Çok fazla deneme. 10 dakika sonra tekrar dene.' });
+    if (!a || !recOk(a, msg.code)) return send(ws, { t: 'autherr', m: 'Kullanıcı adı veya kurtarma kodu yanlış' });
+    const bad = pwBad(np, user); if (bad) return send(ws, { t: 'autherr', m: bad });
+    a.salt = crypto.randomBytes(16).toString('hex'); a.hash = hashPw(np, a.salt); killSessions(a.uid);
+    const rec = newRecovery(a); store.touch();
+    return send(ws, { t: 'auth', token: newSession(a.uid, ctx), user: a.name, reg: 0, rec });
+  }
   if (typeof msg.t === 'string' && social(ctx, msg)) return;
   if (msg.t === 'hello') {
     if (ctx.uid) return;
@@ -214,12 +251,25 @@ function onMessage(ctx, msg) {
   if (msg.t === 'pw') { // parola değiştir: eski parola şart; diğer oturumlar kapanır
     const a = db.accts[(u.name || '').toLowerCase()], np = String(msg.np == null ? '' : msg.np);
     if (!a || tooMany('pw|' + ctx.uid)) return send(ws, { t: 'autherr', m: 'Çok fazla deneme' });
-    if (np.length < 6 || np.length > 64) return send(ws, { t: 'autherr', m: 'Yeni parola 6-64 karakter olmalı' });
+    { const bad = pwBad(np, a.name); if (bad) return send(ws, { t: 'autherr', m: bad }); }
     const h = Buffer.from(hashPw(msg.op, a.salt), 'hex'), ok = Buffer.from(a.hash, 'hex');
     if (h.length !== ok.length || !crypto.timingSafeEqual(h, ok)) return send(ws, { t: 'autherr', m: 'Eski parola yanlış' });
     a.salt = crypto.randomBytes(16).toString('hex'); a.hash = hashPw(np, a.salt);
-    const mine = store.idOf(String(msg.cur || '')); for (const k of Object.keys(db.sess)) if (db.sess[k] === ctx.uid && k !== mine) delete db.sess[k];
+    killSessions(ctx.uid, store.idOf(String(msg.cur || '')));
     store.touch(); for (const [id, x] of conns) if (id === ctx.uid && x !== ctx) {} return send(ws, { t: 'note', m: 'Parola değiştirildi (diğer cihazlardan çıkış yapıldı)' });
+  }
+  if (acct && /^(recgen|sessions|kick|logoutall)$/.test(msg.t)) {
+    const a = db.accts[(u.name || '').toLowerCase()], cur = store.idOf(String(msg.cur || ''));
+    if (!a) return;
+    if (msg.t === 'recgen') {
+      if (tooMany('rg|' + ctx.uid)) return send(ws, { t: 'err', m: 'Çok fazla deneme' });
+      const h = Buffer.from(hashPw(msg.op, a.salt), 'hex'), ok = Buffer.from(a.hash, 'hex');
+      if (h.length !== ok.length || !crypto.timingSafeEqual(h, ok)) return send(ws, { t: 'err', m: 'Parola yanlış' });
+      const rec = newRecovery(a); store.touch(); return send(ws, { t: 'rec', rec });
+    }
+    if (msg.t === 'sessions') return send(ws, { t: 'sessions', list: Object.keys(db.sess).filter((k) => db.sess[k] === ctx.uid).map((k) => Object.assign({ id: k, cur: k === cur ? 1 : 0 }, db.smeta[k] || {})).sort((x, y) => (y.t | 0) - (x.t | 0)).slice(0, 20), rec: a.rhash ? 1 : 0 });
+    if (msg.t === 'kick') { const k = String(msg.id || ''); if (k !== cur && db.sess[k] === ctx.uid) { delete db.sess[k]; delete db.smeta[k]; store.touch(); } return send(ws, { t: 'note', m: 'Oturum kapatıldı', ref: 1 }); }
+    if (msg.t === 'logoutall') { killSessions(ctx.uid); store.touch(); return send(ws, { t: 'note', m: 'Tüm cihazlardan çıkış yapıldı', out: 1 }); }
   }
   switch (msg.t) {
     case 'save': {
@@ -274,7 +324,7 @@ wss.on('connection', (ws, req) => {
   const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').toString().split(',')[0].trim();
   if ((perIp.get(ip) || 0) >= MAX_PER_IP) { ws.close(); return; }
   perIp.set(ip, (perIp.get(ip) || 0) + 1);
-  const ctx = { ip, acct: '', ws, uid: '', lastChat: 0, win: Date.now(), n: 0, alive: true, born: Date.now() };
+  const ctx = { ip, ua: String(req.headers['user-agent'] || '').slice(0, 200), acct: '', ws, uid: '', lastChat: 0, win: Date.now(), n: 0, alive: true, born: Date.now() };
   ws._ctx = ctx;
   ws.on('pong', () => { ctx.alive = true; });
   ws.on('message', (raw) => {

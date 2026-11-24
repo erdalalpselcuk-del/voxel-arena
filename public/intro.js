@@ -3,6 +3,15 @@
   'use strict';
   const $ = (id) => document.getElementById(id), box = $('intro'); if (!box) return;
   const PR = window.VProfile;
+
+  // kurtarma kodu penceresi (kayıttan sonra ve Ayarlar'dan üretince)
+  window.VRec = function (code, cb) {
+    const d = document.createElement('div'); d.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(5,8,14,.88);display:flex;align-items:center;justify-content:center;font-family:var(--hud);color:#fff;text-align:center';
+    d.innerHTML = '<div style="background:#0e1626;border:3px solid #ffd24a;padding:18px 20px;max-width:90vw"><h3 style="margin:0 0 8px;color:#ffd24a">KURTARMA KODUN</h3><div style="font:800 26px monospace;letter-spacing:2px;margin:8px 0;user-select:all">' + String(code).replace(/[^A-Z0-9-]/g, '') + '</div><div style="font-size:13px;opacity:.8;max-width:300px;margin:0 auto 12px">Parolanı unutursan hesabını bu kodla geri alırsın. Bir kez gösterilir; <b>yaz ya da ekran görüntüsü al</b>. Kimseyle paylaşma.</div><button id="recCopy" class="btn" style="margin-right:6px">KOPYALA</button><button id="recOk" class="btn go">KAYDETTİM</button></div>';
+    document.body.appendChild(d);
+    d.querySelector('#recCopy').onclick = () => { try { navigator.clipboard.writeText(code); d.querySelector('#recCopy').textContent = 'KOPYALANDI'; } catch (e) {} };
+    d.querySelector('#recOk').onclick = () => { d.remove(); if (cb) cb(); };
+  };
   const done = () => { box.classList.add('out'); setTimeout(() => box.remove(), 900); };
   if (/[?&]nointro\b/.test(location.search)) { box.remove(); return; }
   // yapımcı adı: harf harf altın animasyon
@@ -23,15 +32,21 @@
     const logged = !!(S && S.acct);
     $('iTabs').style.display = logged || !(net && net.hasServer) ? 'none' : 'flex';
     nick.style.display = pass.style.display = logged ? 'none' : ''; if (mode === 'guest') pass.style.display = 'none';
-    code.style.display = mode === 'reg' && !logged ? '' : 'none';
+    code.style.display = (mode === 'reg' || mode === 'forgot') && !logged ? '' : 'none'; code.placeholder = mode === 'forgot' ? 'Kurtarma kodu (XXXX-XXXX-XXXX)' : 'Kayıt kodu (varsa)';
+    if (mode === 'forgot') pass.placeholder = 'Yeni parola (8+ harf+rakam)'; else pass.placeholder = 'Parola';
+    const fg = $('iForgot'); if (fg) fg.style.display = mode === 'login' && !logged ? '' : 'none';
     tabs.forEach((b) => b.classList.toggle('on', b.dataset.m === mode));
     nick.placeholder = mode === 'guest' ? 'Takma adını yaz' : 'Kullanıcı adı';
     err.textContent = mode === 'guest' ? 'Kayıtsız: sıralama, sohbet, arkadaş, kulüp, bulut kaydı ve dereceli maç yok' : err.textContent;
     pass.autocomplete = mode === 'reg' ? 'new-password' : 'current-password';
-    go1.textContent = logged ? 'OYNA' : mode === 'reg' ? 'KAYIT OL' : mode === 'guest' ? 'KAYITSIZ OYNA' : 'GİRİŞ YAP';
+    go1.textContent = logged ? 'OYNA' : mode === 'forgot' ? 'PAROLAYI YENİLE' : mode === 'reg' ? 'KAYIT OL' : mode === 'guest' ? 'KAYITSIZ OYNA' : 'GİRİŞ YAP';
     who.innerHTML = logged ? 'Hesap: <b>' + S.acct.replace(/[<>&]/g, '') + '</b><a id="iOut">Çıkış / başka hesap</a>' : '';
     if (logged) { const o = $('iOut'); o.onclick = (e) => { e.stopPropagation(); net.logout(); mode = 'login'; view(); }; }
   }
+  const fgEl = document.createElement('a'); fgEl.id = 'iForgot'; fgEl.textContent = 'Parolamı unuttum'; fgEl.style.cssText = 'font:600 12px var(--hud);color:#9ec3ff;cursor:pointer;text-decoration:underline;margin-top:4px;display:none'; fgEl.onclick = (e) => { e.stopPropagation(); mode = 'forgot'; err.textContent = ''; view(); }; go1.parentNode.insertBefore(fgEl, go1.nextSibling);
+  // iPhone/iPad Safari: tam ekran API'si yok → Ana Ekrana Ekle yönlendirmesi
+  try { const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1), sa = navigator.standalone || (matchMedia && matchMedia('(display-mode: standalone)').matches);
+    if (ios && !sa) { const h = document.createElement('div'); h.id = 'iIos'; h.style.cssText = 'font:600 12px var(--hud);color:#ffd24a;margin-top:8px;max-width:300px;text-align:center;line-height:1.4'; h.innerHTML = '\uD83D\uDCF1 Tam ekran için: <b>Paylaş</b> \u2B06\uFE0F → <b>Ana Ekrana Ekle</b>, sonra oyunu oradan aç.'; go1.parentNode.appendChild(h); } } catch (e) {}
   tabs.forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); mode = b.dataset.m; try { localStorage.setItem('va_mode', mode); } catch (x) {} err.textContent = ''; view(); }));
   if (net) net.sub((ev) => { if (ev === 'welcome' || ev === 'auth' || ev === 'status') view(); if (ev === 'autherr') { err.textContent = S.authErr; go1.disabled = false; } });
   view();
@@ -51,9 +66,9 @@
     if (!net || !net.ready) { err.textContent = 'Sunucuya bağlanılıyor, birkaç saniye sonra tekrar dene'; return; }
     if (!v || !pass.value) { err.textContent = 'Kullanıcı adı ve parola gir'; return; }
     go1.disabled = true; clearTimeout(waiting); waiting = setTimeout(() => { go1.disabled = false; }, 6000);
-    const off = (ev) => { if (ev === 'welcome' && S.acct) { clearTimeout(waiting); go1.disabled = false; enter(S.acct); } };
+    const off = (ev) => { if (ev === 'welcome' && S.acct) { clearTimeout(waiting); go1.disabled = false; const r = S.rec; S.rec = ''; if (r) window.VRec(r, () => enter(S.acct)); else enter(S.acct); } };
     net.sub(off);
-    if (mode === 'reg') net.register(v, pass.value, code.value.trim()); else net.login(v, pass.value);
+    if (mode === 'reg') net.register(v, pass.value, code.value.trim()); else if (mode === 'forgot') net.reset(v, code.value.trim(), pass.value); else net.login(v, pass.value);
   }
   go1.addEventListener('click', (e) => { e.stopPropagation(); go(); });
   for (const el of [nick, pass, code]) { el.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); e.stopPropagation(); }); el.addEventListener('click', (e) => e.stopPropagation()); }

@@ -7,14 +7,14 @@ const crypto = require('crypto');
 
 const DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const FILE = path.join(DIR, 'db.json');
-const db = { v: 2, users: {}, clubs: {}, accts: {}, sess: {} };
+const db = { v: 2, users: {}, clubs: {}, accts: {}, sess: {}, smeta: {} };
 let dirty = false, timer = null;
 
 function load() {
   try {
     fs.mkdirSync(DIR, { recursive: true });
     const j = JSON.parse(fs.readFileSync(FILE, 'utf8'));
-    if (j && typeof j === 'object') { db.users = j.users || {}; db.clubs = j.clubs || {}; db.accts = j.accts || {}; db.sess = j.sess || {}; }
+    if (j && typeof j === 'object') { db.users = j.users || {}; db.clubs = j.clubs || {}; db.accts = j.accts || {}; db.sess = j.sess || {}; db.smeta = j.smeta || {}; }
   } catch (e) { if (e.code !== 'ENOENT') console.error('[db] okunamadı:', e.message); }
 }
 function flush() {

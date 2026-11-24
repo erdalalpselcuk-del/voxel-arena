@@ -1,5 +1,5 @@
 ---
-title: Voxel Arena
+title: BLOKSAVAŞ
 emoji: 🎯
 colorFrom: yellow
 colorTo: blue
@@ -8,7 +8,7 @@ app_port: 3000
 pinned: false
 ---
 
-# Voxel Arena
+# BLOKSAVAŞ
 
 Blok dünyasında çok oyunculu FPS (Three.js + Node.js WebSocket). Poxel.io'nun modlarından ve Half-Life'ın silah/sağlık/zırh düzeninden esinlenildi.
 
@@ -127,3 +127,9 @@ Sürekli açık kalma için bkz. **DEPLOY.md** (Fly.io, VPS + systemd + Caddy, R
 - Oyun içinde sağ üstte FPS + ping (Ayarlar → Ping/FPS göstergesi ile kapatılır).
 - Dereceli ve özel/parti odalarında maç başlamadan 'HAZIRIM' ekranı: herkes hazır olunca ya da 90 sn sonra başlar.
 - Tam ekran: Ayarlar ve duraklatma menüsünde buton; iPhone'da 'Ana Ekrana Ekle'.
+
+## BLOKSAVAŞ + hesap koruması
+- Oyun adı BLOKSAVAŞ (logo: public/logo.svg, ikonlar yenilendi).
+- Kayıtta güçlü parola şartı (8+, harf+rakam, kolay parola yok), kurtarma kodu (XXXX-XXXX-XXXX, bir kez gösterilir), 'Parolamı unuttum' ile sıfırlama.
+- Ayarlar → Güvenlik: oturum listesi (cihaz at), tüm cihazlardan çıkış, kurtarma kodu üretme (eski hesaplar için).
+- iPhone: tarayıcıda tam ekran yok; giriş ekranında 'Ana Ekrana Ekle' ipucu.

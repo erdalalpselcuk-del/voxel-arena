@@ -153,7 +153,7 @@ setInterval(() => {
 
 if (require.main === module) {
   createRoom({ mode: process.env.MODE || null, bots: MIN_PLAYERS }); // hazır bir herkese açık oda
-  server.listen(PORT, process.env.HOST || '0.0.0.0', () => console.log(`Voxel Arena http://localhost:${PORT}  (bot dolgusu: ${MIN_PLAYERS}, en çok ${MAX_ROOMS} oda, veri: ${store.DIR})`));
+  server.listen(PORT, process.env.HOST || '0.0.0.0', () => console.log(`BLOKSAVAŞ http://localhost:${PORT}  (bot dolgusu: ${MIN_PLAYERS}, en çok ${MAX_ROOMS} oda, veri: ${store.DIR})`));
   const bye = () => { try { store.flush(); } catch (e) {} process.exit(0); };
   process.on('SIGTERM', bye); process.on('SIGINT', bye);
   process.on('uncaughtException', (e) => console.error('[hata]', e)); // bir hata sunucuyu düşürmesin

@@ -422,7 +422,7 @@
     const s = D().settings;
     const S = NET && NET.S, hasSrv = NET && NET.hasServer;
     const acctBlock = !hasSrv ? '' : S.acct
-      ? `<span class="lab">HESAP</span><div class="fr"><span><b>${esc(S.acct)}</b> <small>${esc(S.sid)}</small></span><button class="mini alt" data-logout="1">Çıkış yap</button></div><div class="phint" style="text-align:left">Kimlik: <b>${esc(S.sid)}</b> &mdash; arkadaşların seni bu kimlikle de ekleyebilir. Satın aldıkların, ilerlemen, sıralaman ve arkadaşların bu hesaba bağlı; başka cihazda giriş yapınca aynen gelir.</div><div class="row"><input id="pwOld" type="password" placeholder="Eski parola" autocomplete="current-password" style="flex:1;min-width:0;padding:7px;background:rgba(0,0,0,.45);color:#fff;border:2px solid rgba(255,255,255,.2);font:600 14px var(--hud)"><input id="pwNew" type="password" placeholder="Yeni parola" autocomplete="new-password" style="flex:1;min-width:0;padding:7px;background:rgba(0,0,0,.45);color:#fff;border:2px solid rgba(255,255,255,.2);font:600 14px var(--hud)"><button class="mini" data-pw="1">Değiştir</button></div>`
+      ? `<span class="lab">HESAP</span><div class="fr"><span><b>${esc(S.acct)}</b> <small>${esc(S.sid)}</small></span><button class="mini alt" data-logout="1">Çıkış yap</button></div><div class="phint" style="text-align:left">Kimlik: <b>${esc(S.sid)}</b> &mdash; arkadaşların seni bu kimlikle de ekleyebilir. Satın aldıkların, ilerlemen, sıralaman ve arkadaşların bu hesaba bağlı; başka cihazda giriş yapınca aynen gelir.</div><div class="row"><input id="pwOld" type="password" placeholder="Eski parola" autocomplete="current-password" style="flex:1;min-width:0;padding:7px;background:rgba(0,0,0,.45);color:#fff;border:2px solid rgba(255,255,255,.2);font:600 14px var(--hud)"><input id="pwNew" type="password" placeholder="Yeni parola" autocomplete="new-password" style="flex:1;min-width:0;padding:7px;background:rgba(0,0,0,.45);color:#fff;border:2px solid rgba(255,255,255,.2);font:600 14px var(--hud)"><button class="mini" data-pw="1">Değiştir</button></div><span class="lab">GÜVENLİK</span><div id="secBox" class="phint" style="text-align:left">Yükleniyor…</div><div class="row"><button class="mini alt" data-recgen="1">Kurtarma kodu üret</button><button class="mini alt" data-outall="1">Tüm cihazlardan çıkış</button></div><div class="phint" style="text-align:left">Parola: en az 8 karakter, harf+rakam, kolay tahmin edilmeyen. Kurtarma kodu ile parolanı unutsan da hesabını geri alırsın; kodu güvenli bir yere yaz.</div>`
       : `<span class="lab">HESAP</span><div class="phint" style="text-align:left">Kayıtsız oynuyorsun: ilerlemen yalnızca bu cihazda, sıralama/sohbet/arkadaş/kulüp/dereceli yok.</div><button class="btn" data-relogin="1">GİRİŞ YAP / KAYIT OL</button>`;
     setBody(acctBlock + `<span class="lab">TAKMA AD</span><div class="phint" style="text-align:left;margin:0">Üst çubuktaki kutudan değiştirebilirsin.</div><span class="lab">OYUN AYARLARI</span>
       ${'ontouchstart' in window ? `<div class="srow"><label for="sTs">Dokunmatik hassasiyet</label><input type="range" id="sTs" min="0.4" max="2.2" step="0.05" value="${s.tsens || 1}"><output id="sTsV">${(+(s.tsens || 1)).toFixed(2)}</output></div>` : ''}
@@ -435,6 +435,7 @@
       <div class="srow"><label for="sVol">Ses</label><input type="range" id="sVol" min="0" max="1" step="0.05" value="${s.vol}"><output id="sVolV">${Math.round(s.vol * 100)}</output></div>
       <span class="lab">İLERLEME</span><button class="btn warn" data-reset="1">PROFİLİ SIFIRLA</button><div class="phint">${live() ? 'Profil sunucuda yedeklenir (hesap anahtarınla her cihazdan açılır).' : 'Profil bu tarayıcıda saklanır.'}</div>${acctHtml()}
       <span class="lab">KONTROLLER</span><div class="phint" style="text-align:left;line-height:1.6">WASD hareket &middot; Boşluk zıpla &middot; Shift koş &middot; Ctrl/C eğil &middot; Q/X atılma<br>Sol tık ateş &middot; Sağ tık nişan &middot; R şarjör &middot; G bomba &middot; 1-7 silah &middot; Enter sohbet &middot; Tab skor &middot; Esc menü</div>`);
+    if (S.acct && NET && NET.sessions) NET.sessions();
   }
   function renderHome() {
     const el = $('home'); if (!el) return;
@@ -497,6 +498,9 @@
     if (ev === 'welcome' || ev === 'status' || ev === 'auth' || ev === 'mmr') updAcct();
     if (ev === 'fr' || ev === 'party' || ev === 'invite') { if (tab === 'friends') { const ae = document.activeElement, k = $('frName') ? $('frName').value : ''; render(); if ($('frName')) { $('frName').value = k; if (ae && ae.id === 'frName') $('frName').focus(); } } else if (ev === 'invite') { toast(x.from + ' seni partiye çağırıyor (Arkadaşlar)'); buildNav(); } renderHome(); }
     if (ev === 'note') toast(x);
+    if (ev === 'rec' && window.VRec) window.VRec(x);
+    if (ev === 'sesref' && NET.sessions) NET.sessions();
+    if (ev === 'sessions') { const b = $('secBox'); if (b && S.sess) b.innerHTML = (S.sess.rec ? 'Kurtarma kodu: <b>var</b> \u2713' : 'Kurtarma kodu: <b style="color:#ff8a6a">yok</b> (aşağıdan üret)') + '<br>' + (S.sess.list || []).map((o) => esc((o.dev || 'Cihaz') + (o.br ? ' · ' + o.br : '')) + ' · ' + new Date(o.t || 0).toLocaleDateString('tr') + (o.cur ? ' <b>(bu cihaz)</b>' : ' <button class="mini alt" data-kick="' + esc(o.id) + '">At</button>')).join('<br>'); }
     if (ev === 'autherr' && tab === 'settings') toast(x, true);
     if (ev === 'partygo') { if (document.body.classList.contains('playing')) return; roomReq = { kind: 'code', code: x }; play(true); }
     if (ev === 'mmr') toast('Derece: ' + (x.d > 0 ? '+' : '') + x.d + ' \u2192 ' + x.rank + ' ' + x.mmr, x.d < 0);
@@ -557,6 +561,9 @@
     else if (d.set != null) { PR.useSet(+d.set); resetPreview(); toast('SET ' + (+d.set + 1) + ' aktif'); render(); }
     else if (d.wep != null) { PR.equip('weapon', +d.wep); resetPreview(); render(); }
     else if (d.logout) { NET.logout(); try { localStorage.removeItem('va_prof2'); } catch (e) {} location.reload(); }
+    else if (d.recgen) { const o = prompt('Kurtarma kodu için mevcut parolanı yaz:'); if (o) NET.recGen(o); }
+    else if (d.outall) { if (confirm('Bu dahil tüm cihazlardaki oturumlar kapatılsın mı?')) NET.logoutAll(); }
+    else if (d.kick) NET.kick(d.kick);
     else if (d.relogin) { try { localStorage.setItem('va_mode', 'login'); } catch (e) {} location.reload(); }
     else if (d.pw) { const o = ($('pwOld') || {}).value || '', nw = ($('pwNew') || {}).value || ''; if (o && nw) NET.changePass(o, nw); else toast('Eski ve yeni parolayı yaz', true); }
     else if (d.fadd) { const v = ($('frName') || {}).value || ''; if (v.trim()) NET.addFriend(v.trim()); }
