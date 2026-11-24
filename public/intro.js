@@ -26,8 +26,9 @@
     code.style.display = mode === 'reg' && !logged ? '' : 'none';
     tabs.forEach((b) => b.classList.toggle('on', b.dataset.m === mode));
     nick.placeholder = mode === 'guest' ? 'Takma adını yaz' : 'Kullanıcı adı';
+    err.textContent = mode === 'guest' ? 'Kayıtsız: sıralama, sohbet, arkadaş, kulüp, bulut kaydı ve dereceli maç yok' : err.textContent;
     pass.autocomplete = mode === 'reg' ? 'new-password' : 'current-password';
-    go1.textContent = logged ? 'OYNA' : mode === 'reg' ? 'KAYIT OL' : mode === 'guest' ? 'MİSAFİR GİR' : 'GİRİŞ YAP';
+    go1.textContent = logged ? 'OYNA' : mode === 'reg' ? 'KAYIT OL' : mode === 'guest' ? 'KAYITSIZ OYNA' : 'GİRİŞ YAP';
     who.innerHTML = logged ? 'Hesap: <b>' + S.acct.replace(/[<>&]/g, '') + '</b><a id="iOut">Çıkış / başka hesap</a>' : '';
     if (logged) { const o = $('iOut'); o.onclick = (e) => { e.stopPropagation(); net.logout(); mode = 'login'; view(); }; }
   }

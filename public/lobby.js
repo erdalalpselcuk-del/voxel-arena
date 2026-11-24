@@ -412,7 +412,7 @@
   }
   let showKey = false;
   function acctHtml() {
-    if (!NET || !NET.hasServer) return '';
+    return ''; // eski gizli anahtar sistemi kaldırıldı: giriş artık kullanıcı adı + parola
     const inp = 'padding:8px;background:rgba(0,0,0,.45);color:#fff;border:2px solid rgba(255,255,255,.2);font:600 13px var(--hud);user-select:text';
     return `<span class="lab">HESAP</span><div class="phint" style="text-align:left">Durum: <b>${live() ? 'bağlı (' + NET.S.lobby + ' kişi lobide)' : NET.S.status === 'kicked' ? 'başka yerde açık' : 'bağlanıyor…'}</b>. Hesabın bu tarayıcıdaki gizli anahtarla tanınır; başka cihazda oynamak için anahtarı kopyala. <b>Kimseyle paylaşma.</b></div>
       <div class="row"><input id="acctKey" readonly value="${showKey ? esc(NET.key) : '••••••••••••••••••••••••'}" style="flex:1;min-width:150px;${inp}"><button class="mini" data-showkey="1">${showKey ? 'Gizle' : 'Göster'}</button></div>
@@ -420,7 +420,11 @@
   }
   function renderSettings() {
     const s = D().settings;
-    setBody(`<span class="lab">TAKMA AD</span><div class="phint" style="text-align:left;margin:0">Üst çubuktaki kutudan değiştirebilirsin.</div><span class="lab">OYUN AYARLARI</span>
+    const S = NET && NET.S, hasSrv = NET && NET.hasServer;
+    const acctBlock = !hasSrv ? '' : S.acct
+      ? `<span class="lab">HESAP</span><div class="fr"><span><b>${esc(S.acct)}</b> <small>${esc(S.sid)}</small></span><button class="mini alt" data-logout="1">Çıkış yap</button></div><div class="phint" style="text-align:left">Kimlik: <b>${esc(S.sid)}</b> &mdash; arkadaşların seni bu kimlikle de ekleyebilir. Satın aldıkların, ilerlemen, sıralaman ve arkadaşların bu hesaba bağlı; başka cihazda giriş yapınca aynen gelir.</div><div class="row"><input id="pwOld" type="password" placeholder="Eski parola" autocomplete="current-password" style="flex:1;min-width:0;padding:7px;background:rgba(0,0,0,.45);color:#fff;border:2px solid rgba(255,255,255,.2);font:600 14px var(--hud)"><input id="pwNew" type="password" placeholder="Yeni parola" autocomplete="new-password" style="flex:1;min-width:0;padding:7px;background:rgba(0,0,0,.45);color:#fff;border:2px solid rgba(255,255,255,.2);font:600 14px var(--hud)"><button class="mini" data-pw="1">Değiştir</button></div>`
+      : `<span class="lab">HESAP</span><div class="phint" style="text-align:left">Kayıtsız oynuyorsun: ilerlemen yalnızca bu cihazda, sıralama/sohbet/arkadaş/kulüp/dereceli yok.</div><button class="btn" data-relogin="1">GİRİŞ YAP / KAYIT OL</button>`;
+    setBody(acctBlock + `<span class="lab">TAKMA AD</span><div class="phint" style="text-align:left;margin:0">Üst çubuktaki kutudan değiştirebilirsin.</div><span class="lab">OYUN AYARLARI</span>
       ${'ontouchstart' in window ? `<div class="srow"><label for="sTs">Dokunmatik hassasiyet</label><input type="range" id="sTs" min="0.4" max="2.2" step="0.05" value="${s.tsens || 1}"><output id="sTsV">${(+(s.tsens || 1)).toFixed(2)}</output></div>` : ''}
       <div class="srow"><label for="sSens">Hassasiyet</label><input type="range" id="sSens" min="0.3" max="2.5" step="0.05" value="${s.sens}"><output id="sSensV">${(+s.sens).toFixed(2)}</output></div>
       <div class="srow"><label for="sFov">Görüş (FOV)</label><input type="range" id="sFov" min="60" max="100" step="1" value="${s.fov}"><output id="sFovV">${s.fov}</output></div>
@@ -489,6 +493,7 @@
     if (ev === 'welcome' || ev === 'status' || ev === 'auth' || ev === 'mmr') updAcct();
     if (ev === 'fr' || ev === 'party' || ev === 'invite') { if (tab === 'friends') { const ae = document.activeElement, k = $('frName') ? $('frName').value : ''; render(); if ($('frName')) { $('frName').value = k; if (ae && ae.id === 'frName') $('frName').focus(); } } else if (ev === 'invite') { toast(x.from + ' seni partiye çağırıyor (Arkadaşlar)'); buildNav(); } renderHome(); }
     if (ev === 'note') toast(x);
+    if (ev === 'autherr' && tab === 'settings') toast(x, true);
     if (ev === 'partygo') { if (document.body.classList.contains('playing')) return; roomReq = { kind: 'code', code: x }; play(true); }
     if (ev === 'mmr') toast('Derece: ' + (x.d > 0 ? '+' : '') + x.d + ' \u2192 ' + x.rank + ' ' + x.mmr, x.d < 0);
     const keep = () => { const k = $('sideIn').value; render(); $('sideIn').value = k; };
@@ -547,6 +552,9 @@
     else if (d.wbuy != null) { const r = PR.buy('weapon', +d.wbuy); toast(r.msg, !r.ok); if (r.ok) PR.equip('weapon', +d.wbuy); resetPreview(); render(); }
     else if (d.set != null) { PR.useSet(+d.set); resetPreview(); toast('SET ' + (+d.set + 1) + ' aktif'); render(); }
     else if (d.wep != null) { PR.equip('weapon', +d.wep); resetPreview(); render(); }
+    else if (d.logout) { NET.logout(); try { localStorage.removeItem('va_prof2'); } catch (e) {} location.reload(); }
+    else if (d.relogin) { try { localStorage.setItem('va_mode', 'login'); } catch (e) {} location.reload(); }
+    else if (d.pw) { const o = ($('pwOld') || {}).value || '', nw = ($('pwNew') || {}).value || ''; if (o && nw) NET.changePass(o, nw); else toast('Eski ve yeni parolayı yaz', true); }
     else if (d.fadd) { const v = ($('frName') || {}).value || ''; if (v.trim()) NET.addFriend(v.trim()); }
     else if (d.facc) NET.acceptFriend(d.facc); else if (d.fdec) NET.declineFriend(d.fdec); else if (d.frm) NET.removeFriend(d.frm);
     else if (d.pinv) NET.invite(d.pinv); else if (d.pjoin) { NET.joinParty(d.pjoin); toast('Partiye katıldın'); }

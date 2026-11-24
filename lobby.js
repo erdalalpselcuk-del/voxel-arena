@@ -33,7 +33,7 @@ const rankName = (m) => (m < 900 ? 'Bronz' : m < 1100 ? 'Gümüş' : m < 1300 ? 
 function verify(tok) { // oyun odasına gelen oturum jetonunu doğrula (yalnızca giriş yapmış hesaplar)
   tok = String(tok || ''); if (tok.length < 16 || tok.length > 80) return null;
   const uid = db.sess[store.idOf(tok)], u = uid && db.users[uid]; if (!u) return null;
-  return { uid, mmr: u.mmr || 1000 };
+  return { uid, mmr: u.mmr || 1000, name: u.name };
 }
 function rankResult(uid, won, kills) {
   const u = db.users[uid]; if (!u) return;
@@ -70,7 +70,14 @@ const parties = new Map(); // pid -> { id, leader, members: [uid], mode }
 const partyOf = new Map(); // uid -> pid
 const nameOf = (uid) => (db.users[uid] && db.users[uid].name) || 'Oyuncu';
 const isAcct = (uid) => /^a/.test(uid);
-function uidByName(n) { const a = db.accts[String(n || '').trim().toLowerCase()]; return a ? a.uid : ''; }
+const shortId = (uid) => '#' + String(uid).slice(1, 7).toUpperCase();
+function uidByName(n) {
+  n = String(n || '').trim();
+  if (n[0] === '#' && n.length >= 5) { const q = n.slice(1).toLowerCase(); const a = Object.values(db.accts).find((x) => x.uid.slice(1, 7) === q.slice(0, 6)); return a ? a.uid : ''; }
+  const a = db.accts[n.toLowerCase()]; return a ? a.uid : '';
+}
+// oyun odasında: kayıtlı bir hesap adı, o hesap olmayan biri tarafından kullanılamaz
+function nameFree(name, accUid) { const a = db.accts[String(name || '').trim().toLowerCase()]; return !a || a.uid === accUid; }
 function friendsView(uid) {
   const u = db.users[uid] || {};
   const mk = (id) => { const c = conns.get(id); return { id, name: nameOf(id), online: !!c, party: !!partyOf.get(id), rank: rankName((db.users[id] && db.users[id].mmr) || 1000) }; };
@@ -175,7 +182,7 @@ function pushHist(arr, m) { arr.push(m); if (arr.length > 60) arr.shift(); }
 let lbCache = null, lbAt = 0;
 function leaderboard() {
   if (lbCache && Date.now() - lbAt < 5000) return lbCache;
-  lbCache = Object.values(db.users).filter((u) => u.stats && (u.stats.xp || u.stats.kills)).map((u) => ({ id: u.id, n: u.name, s: score(u.stats), lv: u.stats.level, tag: u.club || '' })).sort((a, b) => b.s - a.s);
+  lbCache = Object.values(db.users).filter((u) => isAcct(u.id) && u.stats && (u.stats.xp || u.stats.kills)).map((u) => ({ id: u.id, n: u.name, s: score(u.stats), lv: u.stats.level, tag: u.club || '' })).sort((a, b) => b.s - a.s);
   lbAt = Date.now(); return lbCache;
 }
 
@@ -196,23 +203,35 @@ function onMessage(ctx, msg) {
     ctx.uid = uid; conns.set(uid, ctx); store.touch();
     if (u.club && !db.clubs[u.club]) u.club = '';
     const clientRev = num(msg.rev, 9e15);
-    send(ws, { t: 'welcome', id: uid, name: u.name, acct: ctx.acct || '', vip: vipLevel(ctx.acct), mmr: u.mmr || 1000, rank: rankName(u.mmr || 1000), rm: u.rm | 0, rw: u.rw | 0, rev: u.rev, profile: u.profile && u.rev > clientRev ? u.profile : null, club: clubPub(u.club), members: u.club ? members(u.club) : [], chat: globalChat.slice(-40), cchat: u.club ? (clubChat.get(u.club) || []).slice(-30) : [], ...onlineInfo() });
+    send(ws, { t: 'welcome', id: uid, name: u.name, acct: ctx.acct || '', sid: ctx.acct ? shortId(uid) : '', vip: vipLevel(ctx.acct), mmr: u.mmr || 1000, rank: rankName(u.mmr || 1000), rm: u.rm | 0, rw: u.rw | 0, rev: u.rev, profile: u.profile && u.rev > clientRev ? u.profile : null, club: clubPub(u.club), members: u.club ? members(u.club) : [], chat: globalChat.slice(-40), cchat: u.club ? (clubChat.get(u.club) || []).slice(-30) : [], ...onlineInfo() });
     scheduleOnline();
     if (u.club) pushClub(u.club);
     return;
   }
   const u = ctx.uid && db.users[ctx.uid]; if (!u) return;
+  const acct = isAcct(ctx.uid);
+  if (!acct && /^(save|name|chat|club\.create|club\.join|club\.leave)$/.test(msg.t)) { if (msg.t !== 'save' && msg.t !== 'name') send(ws, { t: 'err', m: 'Bu özellik için hesapla giriş yapmalısın (Giriş / Kayıt)' }); return; }
+  if (msg.t === 'pw') { // parola değiştir: eski parola şart; diğer oturumlar kapanır
+    const a = db.accts[(u.name || '').toLowerCase()], np = String(msg.np == null ? '' : msg.np);
+    if (!a || tooMany('pw|' + ctx.uid)) return send(ws, { t: 'autherr', m: 'Çok fazla deneme' });
+    if (np.length < 6 || np.length > 64) return send(ws, { t: 'autherr', m: 'Yeni parola 6-64 karakter olmalı' });
+    const h = Buffer.from(hashPw(msg.op, a.salt), 'hex'), ok = Buffer.from(a.hash, 'hex');
+    if (h.length !== ok.length || !crypto.timingSafeEqual(h, ok)) return send(ws, { t: 'autherr', m: 'Eski parola yanlış' });
+    a.salt = crypto.randomBytes(16).toString('hex'); a.hash = hashPw(np, a.salt);
+    const mine = store.idOf(String(msg.cur || '')); for (const k of Object.keys(db.sess)) if (db.sess[k] === ctx.uid && k !== mine) delete db.sess[k];
+    store.touch(); for (const [id, x] of conns) if (id === ctx.uid && x !== ctx) {} return send(ws, { t: 'note', m: 'Parola değiştirildi (diğer cihazlardan çıkış yapıldı)' });
+  }
   switch (msg.t) {
     case 'save': {
       const p = msg.profile; if (!p || typeof p !== 'object' || Array.isArray(p)) return;
       let js; try { js = JSON.stringify(p); } catch (e) { return; }
       if (js.length > SAVE_MAX) return send(ws, { t: 'err', m: 'Kayıt çok büyük' });
       const rev = num(msg.rev, 9e15); if (rev < u.rev) return send(ws, { t: 'saved', rev: u.rev, stale: 1 }); // eski sürüm üzerine yazma
-      u.profile = p; u.rev = rev; if (typeof p.name === 'string') u.name = clean(p.name, 16) || u.name;
+      u.profile = p; u.rev = rev; if (!acct && typeof p.name === 'string') u.name = clean(p.name, 16) || u.name;
       const s = msg.stats || {}; u.stats = { xp: num(s.xp, 1e9), kills: num(s.kills, 1e9), deaths: num(s.deaths, 1e9), wins: num(s.wins, 1e9), matches: num(s.matches, 1e9), level: Math.max(1, num(s.level, 9999)) };
       store.touch(); send(ws, { t: 'saved', rev }); break;
     }
-    case 'name': u.name = clean(msg.name, 16) || u.name; store.touch(); break;
+    case 'name': if (!acct) { u.name = clean(msg.name, 16) || u.name; store.touch(); } break;
     case 'chat': {
       const text = clean(msg.text, 120), now = Date.now(); if (!text) return;
       if (now - ctx.lastChat < 800) return send(ws, { t: 'err', m: 'Biraz yavaş yaz' });
@@ -273,4 +292,4 @@ wss.on('connection', (ws, req) => {
 // bağlantı kopukluğunu ve boşta kalan proxy zaman aşımlarını yakalamak için canlılık sinyali
 setInterval(() => { for (const c of wss.clients) { const x = c._ctx; if (!x) continue; if (!x.alive || (!x.uid && Date.now() - x.born > 15000)) { c.terminate(); continue; } x.alive = false; try { c.ping(); } catch (e) {} } }, 25000).unref();
 
-module.exports = { verify, rankResult, wss, onlineInfo, setGameCount: (f) => { gameCount = f; }, setPartyRoom: (f) => { partyRoom = f; }, stats: () => ({ users: Object.keys(db.users).length, clubs: Object.keys(db.clubs).length, lobby: conns.size }) };
+module.exports = { nameFree, verify, rankResult, wss, onlineInfo, setGameCount: (f) => { gameCount = f; }, setPartyRoom: (f) => { partyRoom = f; }, stats: () => ({ users: Object.keys(db.users).length, clubs: Object.keys(db.clubs).length, lobby: conns.size }) };

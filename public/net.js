@@ -52,7 +52,7 @@
   }
   function flushSave() {
     clearTimeout(saveT); saveT = null;
-    if (!open()) return;
+    if (!open() || !S.acct) return; // bulut kaydı yalnızca hesaplarda
     send({ t: 'save', profile: PR.data, stats: PR.stats(), rev: PR.data.rev || Date.now() });
   }
   function onSave() { if (!saveT) saveT = setTimeout(flushSave, 1500); }
@@ -63,10 +63,10 @@
         helloOk = true; tries = 0; S.status = 'on'; S.id = m.id; S.lobby = m.lobby | 0; S.game = m.game | 0;
         S.chat = (m.chat || []).map(mark); S.cchat = (m.cchat || []).map(mark); S.members = m.members || [];
         let imported = false;
-        if (m.profile) imported = PR.importCloud(m.profile, m.rev);
-        S.acct = m.acct || ''; S.vip = m.vip | 0; S.mmr = m.mmr | 0; S.rank = m.rank || ''; S.rm = m.rm | 0; S.rw = m.rw | 0; applyClub(m.club);
+        if (m.profile && m.acct) imported = PR.importCloud(m.profile, m.rev);
+        S.acct = m.acct || ''; S.sid = m.sid || ''; S.vip = m.vip | 0; S.mmr = m.mmr | 0; S.rank = m.rank || ''; S.rm = m.rm | 0; S.rw = m.rw | 0; applyClub(m.club);
         if (S.vip && PR.applyVip && PR.applyVip(S.vip)) { imported = true; flushSave(); }
-        if (!imported) flushSave(); // yerel kayıt sunucudakinden yeni/eşit: sunucuya yaz
+        if (!imported && S.acct) flushSave(); // yerel kayıt sunucudakinden yeni/eşit: sunucuya yaz
         else if (PR.data.name == null || !PR.data.name.trim()) { /* ad boşsa lobi atar */ }
         badge(); emit('welcome', { imported }); if (imported) emit('profile'); break;
       }
@@ -122,6 +122,7 @@
       try { localStorage.setItem('va_prof2', JSON.stringify(PR.data)); } catch (e) {}
       S.status = 'off'; refresh(); return true;
     },
+    changePass(op, np) { S.authErr = ''; send({ t: 'pw', op, np, cur: lsGet('va_token') }); },
     friends() { send({ t: 'fr.list' }); },
     addFriend(user) { send({ t: 'fr.add', user }); }, acceptFriend(id) { send({ t: 'fr.accept', id }); }, declineFriend(id) { send({ t: 'fr.decline', id }); }, removeFriend(id) { send({ t: 'fr.remove', id }); },
     invite(id) { send({ t: 'party.invite', id }); }, joinParty(pid) { S.invites = S.invites.filter((x) => x.pid !== pid); send({ t: 'party.join', pid }); }, leaveParty() { send({ t: 'party.leave' }); },

@@ -114,8 +114,10 @@ wss.on('connection', (ws, req) => {
       r.sockets.set(tmp, ws);
       const cid = String(msg.cid || '').slice(0, 40); // aynı sekmeden yeniden girişte eski (hayalet) oyuncuyu hemen temizle
       if (cid) for (const rr of rooms.values()) for (const q of [...rr.game.players.values()]) if (q.human && q.cid === cid) { const os = rr.sockets.get(q.id); rr.sockets.delete(q.id); rr.game.removePlayer(q.id); if (rr.host === q.id) rr.host = [...rr.sockets.keys()][0] || 0; if (os) { try { os.terminate(); } catch (e) {} } }
+      if (acc) msg.name = String(acc.name || msg.name).slice(0, 16);
+      else if (!lobby.nameFree(msg.name, '')) { msg.name = 'Misafir' + (100 + Math.floor(Math.random() * 900)); ws.send(JSON.stringify({ t: 'note', m: 'Bu ad kayıtlı bir hesaba ait; Misafir adıyla giriyorsun' })); }
       const p = g.addPlayer(msg, true);
-      if (p) { p.cid = cid; if (acc) { p.uid = acc.uid; p.mmr = acc.mmr; } }
+      if (p) { p.cid = cid; if (acc) { p.uid = acc.uid; p.mmr = acc.mmr; p.ver = 1; } }
       if (!p) { r.sockets.delete(tmp); ws.send(JSON.stringify({ t: 'full' })); return ws.close(); }
       room = r; id = p.id; r.emptyAt = 0;
       if (!r.host) r.host = id;

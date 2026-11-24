@@ -571,6 +571,7 @@ function onFlagMsg(m) {
 
 function onMsg(m) {
   switch (m.t) {
+    case 'note': if (VA.hooks.toast) VA.hooks.toast(m.m); break;
     case 'needlogin': { rejected = true; const t = 'Dereceli maç için hesapla giriş yapmalısın (Giriş / Kayıt).'; if (VA.hooks.status) VA.hooks.status(t); if (VA.hooks.toast) VA.hooks.toast(t); break; }
     case 'full': case 'busy': case 'noroom': { rejected = true; const t = { full: 'Oda ya da sunucu dolu.', busy: 'Sunucuda boş oda yeri yok, biraz sonra dene.', noroom: 'Bu kodla oda bulunamadı.' }[m.t]; if (VA.hooks.status) VA.hooks.status(t); if (VA.hooks.toast) VA.hooks.toast(t); break; }
     case 'room': ROOM = m; syncPauseUi(); { const rt = $('roomtag'); if (rt) { rt.textContent = 'ODA ' + m.code + (m.priv ? ' (özel)' : ''); rt.style.display = ''; } } feed('Oda <b>' + esc(m.code) + '</b>' + (m.priv ? ' &middot; özel: kodu arkadaşlarınla paylaş' : '')); break;
