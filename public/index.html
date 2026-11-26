@@ -108,7 +108,7 @@
   .podium{position:relative;display:flex;justify-content:center;align-items:flex-end;gap:6px;height:178px;margin:6px 0 10px;overflow:hidden}
   .pc{display:flex;flex-direction:column;align-items:center;width:30%;max-width:130px}
   .pav{position:relative;width:34px;height:54px;opacity:0;animation:pdrop .7s cubic-bezier(.3,1.6,.5,1) var(--d) forwards}
-  .pav i{position:absolute;left:50%;transform:translateX(-50%);display:block}.ph{width:22px;height:22px;top:0;border:2px solid rgba(0,0,0,.35)}.pbd{width:30px;height:20px;top:22px}.pl{width:20px;height:12px;top:42px;filter:brightness(.7)}
+  .pav i{position:absolute;left:50%;transform:translateX(-50%);display:block}.pph{width:22px;height:22px;top:0;border:2px solid rgba(0,0,0,.35)}.pbd{width:30px;height:20px;top:22px}.ppl{width:20px;height:12px;top:42px;filter:brightness(.7)}
   .pn{font:700 13px var(--hud,sans-serif);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:3px;opacity:0;animation:fadeUp .4s ease calc(var(--d) + .5s) forwards}
   .pkk{font:600 11px var(--hud,sans-serif);color:#9aa7bf;opacity:0;animation:fadeUp .4s ease calc(var(--d) + .6s) forwards}
   .pst{width:100%;background:linear-gradient(#3a465f,#222a3b);border:2px solid rgba(255,255,255,.2);border-bottom:0;display:flex;align-items:center;justify-content:center;transform-origin:bottom;transform:scaleY(0);animation:prise .6s ease calc(var(--d) - .5s) forwards}
@@ -247,6 +247,7 @@
   @keyframes fl{from{opacity:.55}to{opacity:0}}
   body.passwide #center{display:none}
   body.passwide #side{grid-column:2/4}
+  .rg{margin:14px 0 6px;padding:5px 10px;border-left:4px solid var(--rc);background:linear-gradient(90deg,color-mix(in srgb,var(--rc) 22%,transparent),transparent);color:var(--rc);font:700 15px var(--hud);letter-spacing:.14em}.rg small{margin-left:8px;opacity:.7}
   .ph{position:relative;display:grid;grid-template-columns:minmax(0,1.3fr) 130px minmax(0,1fr);grid-template-areas:"l ring xp" "show show show";gap:10px 18px;padding:10px 14px;border:2px solid var(--c1);background:linear-gradient(120deg,color-mix(in srgb,var(--c1) 26%,#0a0f1c) 0,#0a0f1c 55%,color-mix(in srgb,var(--c2) 30%,#0a0f1c) 100%);overflow:hidden;box-shadow:0 0 28px color-mix(in srgb,var(--c1) 35%,transparent)}
   .ph:before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,transparent 0 22px,rgba(255,255,255,.035) 22px 24px);pointer-events:none}
   .ph-l{grid-area:l;position:relative}.ph-ring{grid-area:ring}.ph-xp{grid-area:xp}.ph-show{grid-area:show}

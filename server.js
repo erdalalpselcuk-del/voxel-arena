@@ -147,7 +147,7 @@ setInterval(() => {
   const now = Date.now();
   for (const [code, r] of rooms) {
     if (!r.game.humans()) { if (r.emptyAt && now - r.emptyAt > (r.priv ? EMPTY_MS : EMPTY_MS * 2)) rooms.delete(code); continue; } // boş odada oyun adımı çalışmaz
-    r.game.step(0.05);
+    const dtr = Math.min(0.1, Math.max(0.02, (now - (r.lastStep || now - 50)) / 1000)); r.lastStep = now; r.game.step(dtr);
   }
 }, 50);
 

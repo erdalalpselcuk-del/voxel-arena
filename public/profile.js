@@ -31,6 +31,15 @@
     { name: 'Robot', head: 0x8a9099, eye: 0x35e0ff, pattern: 'suit', s: { b: 0x8a9099, t: 0x35e0ff, m: 'robot', glow: 1 } },
     { name: 'Korsan Kaptan', head: 0xd9a066, eye: 0x111111, pattern: 'suit', s: { b: 0x3a2a1a, t: 0xd4af37, m: 'pirate' } },
     { name: 'Altın Şövalye', head: 0xd9a066, eye: 0x111111, pattern: 'suit', s: { b: 0xd4af37, t: 0xffffff, m: 'knight' } },
+    { name: 'Cehennem Lordu', head: 0xd9a066, eye: 0xff3b00, pattern: 'suit', s: { b: 0x1a0505, t: 0xff3b00, m: 'demon', glow: 1, fx: 'flame' } },
+    { name: 'Anka Kuşu', head: 0xd9a066, eye: 0x111111, pattern: 'suit', s: { b: 0xb8300a, t: 0xffd23f, m: 'visor', v: 0xfff0a0, glow: 1, fx: 'flame' } },
+    { name: 'Buz Kralı', head: 0xd9a066, eye: 0x111111, pattern: 'suit', s: { b: 0x1b4f72, t: 0x7df9ff, m: 'crown', glow: 1, fx: 'ice' } },
+    { name: 'Plazma Savaşçı', head: 0xd9a066, eye: 0x111111, pattern: 'suit', s: { b: 0x120a2b, t: 0xb388ff, m: 'visor', v: 0x00e5ff, glow: 1, fx: 'plasma' } },
+    { name: 'Ejderha Efendisi', head: 0xd9a066, eye: 0xffd23f, pattern: 'suit', s: { b: 0x14301f, t: 0xd4af37, m: 'demon', glow: 1, fx: 'dragon' } },
+    { name: 'Alev Samuray', head: 0xd9a066, eye: 0x111111, pattern: 'suit', s: { b: 0x4a0d0d, t: 0xff6a00, m: 'kabuto', glow: 1, fx: 'flame' } },
+    { name: 'Elmas Kral', head: 0xd9a066, eye: 0x111111, pattern: 'suit', s: { b: 0x9be8ff, t: 0xffffff, m: 'crown', glow: 1, fx: 'ice' } },
+    { name: 'Karanlık Şövalye', head: 0xd9a066, eye: 0x111111, pattern: 'suit', s: { b: 0x0d0d14, t: 0x8e44ad, m: 'knight', glow: 1, fx: 'plasma' } },
+    { name: 'İnferno Ninja', head: 0xd9a066, eye: 0xff3b00, pattern: 'suit', s: { b: 0x15151c, t: 0xff3b00, m: 'ninja', glow: 1, fx: 'flame' } },
   ];
   const HATS = ['Şapkasız', 'Kep', 'Taç', 'Miğfer', 'Anten', 'Boynuz', 'Kovboy', 'Silindir', 'Halka', 'Korsan', 'Cadı', 'Aşçı', 'Noel', 'Mohawk', 'Baret', 'Şövalye Miğferi', 'Alev', 'Kral Tacı', 'Ördek', 'Kulaklık', 'Siber Vizör', 'Mantar', 'Elmas Taç', 'Basket Bandı'];
   const BACKS = ['Yok', 'Sırt Çantası', 'Pelerin', 'Kanatlar', 'Jetpack', 'Kılıç', 'Ok Kılıfı', 'Kalkan', 'Şeytan Kanatları', 'Dalgıç Tüpü', 'Gitar', 'Gökkuşağı Pelerin', 'Roket Çantası', 'Altın Kanatlar', 'Basket Topu'];
@@ -47,7 +56,7 @@
   const spec = (list, prices) => list.map((o, i) => Object.assign({ id: i }, o, prices[i] || px(0)));
   const CATALOG = {
     color: COLORS.map((c, i) => Object.assign({ id: i, name: COLOR_NAMES[i], hex: c }, i < 6 ? px(0) : px(100 + (i - 6) * 30))),
-    skin: spec(SKINS.map((x) => ({ name: x.name })), [px(0), px(400), px(600), px(500), gem(25), gem(60), px(700), px(650), gem(40), px(800), px(750), px(600), pass(3), pass(2), px(900), pass(3), pass(3), pass(3), gem(120), px(1200), px(1500), gem(150), gem(90), gem(110), gem(100), px(1800), px(1400), gem(160)]),
+    skin: spec(SKINS.map((x) => ({ name: x.name })), [px(0), px(400), px(600), px(500), gem(25), gem(60), px(700), px(650), gem(40), px(800), px(750), px(600), pass(3), pass(2), px(900), pass(3), pass(3), pass(3), gem(120), px(1200), px(1500), gem(150), gem(90), gem(110), gem(100), px(1800), px(1400), gem(160), pass(3), pass(3), pass(2), pass(2), pass(3), pass(3), gem(220), pass(2), gem(170)]),
     hat: spec(HATS.map((n) => ({ name: n })), [px(0), px(150), gem(20), px(250), px(100), px(300), px(350), px(400), gem(15), px(300), px(350), px(200), px(250), px(300), px(200), px(500), pass(3), pass(3), px(400), px(350), pass(2), px(450), pass(3), px(900)]),
     back: spec(BACKS.map((n) => ({ name: n })), [px(0), px(200), px(350), gem(30), px(500), px(250), px(300), px(350), pass(2), px(400), px(450), pass(3), pass(2), pass(3), px(1000)]),
     gskin: GSKINS.map((x, i) => Object.assign({ id: i, name: x.name, hex: x.color }, [px(0), px(300), px(300), px(400), gem(40), px(300), px(300), px(300), px(350), px(350), pass(2), px(400), gem(35), px(400), px(400), pass(3), pass(3)][i])),
@@ -266,13 +275,13 @@
   };
   const PREM_T = {
     1: R.item('gskin', 7), 2: R.crate('bronze', 2), 3: R.item('hat', 9), 4: R.gem(5), 5: R.item('skin', 7), 6: R.px(400), 7: R.item('back', 6), 8: R.crate('silver'), 9: R.item('weapon', 19), 10: R.item('skin', 12),
-    11: R.item('gskin', 11), 12: R.gem(8), 13: R.item('hat', 10), 14: R.px(600), 15: R.item('weapon', 20), 16: R.crate('silver'), 17: R.item('back', 7), 18: R.gem(10), 19: R.item('hat', 13), 20: R.multi(R.item('weapon', 17), R.px(500)),
-    21: R.item('skin', 6), 22: R.crate('silver', 2), 23: R.item('gskin', 14), 24: R.px(800), 25: R.item('hat', 16), 26: R.item('back', 10), 27: R.gem(12), 28: R.item('weapon', 21), 29: R.crate('gold'), 30: R.multi(R.item('skin', 13), R.item('back', 11), R.item('coll', 11)),
-    31: R.item('hat', 12), 32: R.px(1000), 33: R.item('back', 9), 34: R.item('gskin', 10), 35: R.item('weapon', 23), 36: R.crate('gold'), 37: R.item('skin', 9), 38: R.gem(15), 39: R.item('hat', 20), 40: R.multi(R.item('back', 8), R.item('hat', 22)),
-    41: R.item('weapon', 22), 42: R.crate('gold'), 43: R.item('gskin', 15), 44: R.gem(20), 45: R.multi(R.item('skin', 15), R.item('gskin', 16)), 46: R.item('hat', 17), 47: R.item('back', 12), 48: R.item('weapon', 24), 49: R.crate('gold', 2),
-    50: R.multi(R.item('weapon', 27), R.item('skin', 17), R.item('back', 13), R.item('skin', 16), R.item('coll', 12)),
+    11: R.item('gskin', 11), 12: R.gem(8), 13: R.item('hat', 10), 14: R.px(600), 15: R.item('weapon', 20), 16: R.crate('silver'), 17: R.item('back', 7), 18: R.item('skin', 30), 19: R.item('hat', 13), 20: R.multi(R.item('weapon', 17), R.px(500)),
+    21: R.item('skin', 6), 22: R.crate('silver', 2), 23: R.item('gskin', 14), 24: R.item('skin', 31), 25: R.item('hat', 16), 26: R.item('back', 10), 27: R.gem(12), 28: R.item('weapon', 21), 29: R.crate('gold'), 30: R.multi(R.item('skin', 13), R.item('back', 11), R.item('coll', 11)),
+    31: R.item('hat', 12), 32: R.multi(R.item('coll', 13), R.px(500)), 33: R.item('back', 9), 34: R.item('gskin', 10), 35: R.item('weapon', 23), 36: R.crate('gold'), 37: R.item('skin', 9), 38: R.item('skin', 33), 39: R.item('hat', 20), 40: R.multi(R.item('back', 8), R.item('hat', 22)),
+    41: R.item('weapon', 22), 42: R.item('skin', 35), 43: R.item('gskin', 15), 44: R.item('skin', 28), 45: R.multi(R.item('skin', 15), R.item('gskin', 16)), 46: R.item('hat', 17), 47: R.item('back', 12), 48: R.item('weapon', 24), 49: R.multi(R.item('skin', 32), R.crate('gold')),
+    50: R.multi(R.item('weapon', 27), R.item('skin', 17), R.item('back', 13), R.item('skin', 16), R.item('coll', 12), R.item('skin', 29)),
   };
-  const FREE_ITEMS = { 5: ['hat', 11], 15: ['gskin', 6], 25: ['skin', 11], 35: ['hat', 14], 45: ['weapon', 16] };
+  const FREE_ITEMS = { 5: ['hat', 11], 15: ['gskin', 6], 25: ['skin', 11], 35: ['hat', 14], 45: ['weapon', 16], 30: ['weapon', 28], 20: ['skin', 36] };
   function passReward(i, premium) {
     if (premium) return PREM_T[i];
     if (FREE_ITEMS[i]) return R.item(FREE_ITEMS[i][0], FREE_ITEMS[i][1]);

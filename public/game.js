@@ -649,8 +649,9 @@
       if (this.flags && this.flags[1 - (b.team | 0)].carrier === b.id) { gx = this.flags[b.team | 0].home[0]; gz = this.flags[b.team | 0].home[2]; }
       b.seen += dt;
       const W = WP[w];
-      if (b.seen > 0.5 && Math.abs(dyaw) < 0.3 && Date.now() >= b.nextFire + (W.auto ? 40 : 220) && (W.kind !== 'melee' || tgt.dist < 2.4)) {
-        const err = 0.04 + tgt.dist * 0.0022 + W.spread;
+      const heavy = W.kind === 'rocket' || W.kind === 'gl';
+      if (b.seen > (heavy ? 1.0 : 0.5) && Math.abs(dyaw) < (heavy ? 0.18 : 0.3) && Date.now() >= b.nextFire + (heavy ? 900 : W.auto ? 40 : 220) && (W.kind !== 'melee' || tgt.dist < 2.4)) {
+        const err = (0.04 + tgt.dist * 0.0022 + W.spread) * (heavy ? 2.4 : 1);
         const ds = [];
         for (let i = 0; i < Math.max(1, W.pellets); i++) ds.push([dx / tgt.dist + (Math.random() - 0.5) * err * 2, dy / tgt.dist + (Math.random() - 0.5) * err * 2 - (W.kind === 'rocket' ? 0.05 : 0), dz / tgt.dist + (Math.random() - 0.5) * err * 2]);
         this.fire(b, w, eye, ds);
@@ -722,7 +723,7 @@
       }
       if (boom) {
         this.projs.splice(i, 1);
-        this.explode(pr.pos, pr.owner, pr.k === 'rocket' ? 4.2 : pr.k === 'gl' ? 4 : 4.6, pr.k === 'rocket' ? 115 : 95, pr.k === 'rocket' ? 7 : pr.k === 'gl' ? 13 : -1);
+        this.explode(pr.pos, pr.owner, pr.k === 'rocket' ? 3.6 : pr.k === 'gl' ? 3.4 : 4.2, pr.k === 'rocket' ? 72 : pr.k === 'gl' ? 58 : 80, pr.k === 'rocket' ? 7 : pr.k === 'gl' ? 13 : -1);
       }
     }
   };

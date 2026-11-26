@@ -223,7 +223,16 @@ function makeAvatar(p) {
       for (const sd of [-1, 1]) bx(0.2, 0.1, 0.4, T, sd * 0.38, 1.4, 0);
       for (const lg of [l1, l2]) lg.add(box(0.27, 0.3, 0.29, B, 0, -0.12, 0), box(0.28, 0.06, 0.3, T, 0, -0.25, 0));
       if (s.glow) { bx(0.5, 0.03, 0.36, T, 0, 1.15, 0); bx(0.5, 0.03, 0.36, T, 0, 0.85, 0); }
-      if (m === 'ninja') { head.add(box(0.43, 0.24, 0.43, B, 0, 0.1, 0), box(0.43, 0.14, 0.43, B, 0, -0.14, 0), box(0.44, 0.04, 0.44, T, 0, 0.23, 0), box(0.1, 0.03, 0.05, T, 0.2, 0.0, -0.22)); }
+      if (s.fx) {
+        const FX = { flame: [0xff3b00, 0xffa500, 0xfff0a0], ice: [0x7df9ff, 0xffffff, 0xbdefff], plasma: [0xb388ff, 0x00e5ff, 0xffffff], dragon: [0x7cff00, 0xffd23f, 0xff6a00] }[s.fx], live = s.fx !== 'ice';
+        const tongue = (par, x, y, z, h, i) => { for (const [k, col, w] of [[0, FX[0], 0.1], [0.55, FX[1], 0.07], [0.95, FX[2], 0.04]]) { const mm = new THREE.Mesh(blockGeo, basicMat(col)); mm.scale.set(w, h * (k ? 0.6 : 1), w); mm.position.set(x, y + h * k * 0.55, z); par.add(mm); if (live) flames.push({ m: mm, y0: mm.position.y, h0: mm.scale.y, ph: i * 1.7 + k * 3 }); } };
+        [[-0.14, 0.3, 0.13], [0, 0.34, 0.2], [0.14, 0.3, 0.14]].forEach(([x, y, h], i) => tongue(head, x, y, 0, h, i));
+        [[-1, 0], [1, 1]].forEach(([sd, i]) => { tongue(body, sd * 0.38, 1.5, 0, 0.26, i + 4); tongue(body, sd * 0.38, 1.5, 0.1, 0.16, i + 6); });
+        tongue(body, 0, 0.55, 0.19, 0.12, 9); tongue(body, 0.2, 0.55, -0.19, 0.12, 10);
+      }
+      if (m === 'demon') { head.add(box(0.47, 0.47, 0.47, B, 0, 0, 0), box(0.07, 0.2, 0.07, T, -0.2, 0.32, 0), box(0.07, 0.2, 0.07, T, 0.2, 0.32, 0), box(0.1, 0.06, 0.03, T, -0.1, 0.04, 0.24), box(0.1, 0.06, 0.03, T, 0.1, 0.04, 0.24)); }
+      else if (m === 'crown') { head.add(box(0.46, 0.4, 0.46, B, 0, -0.03, 0), box(0.48, 0.06, 0.48, T, 0, 0.2, 0)); for (const x of [-0.18, 0, 0.18]) head.add(box(0.07, 0.15, 0.07, T, x, 0.3, 0)); head.add(box(0.1, 0.06, 0.03, T, -0.1, 0.02, 0.24), box(0.1, 0.06, 0.03, T, 0.1, 0.02, 0.24)); }
+      else if (m === 'ninja') { head.add(box(0.43, 0.24, 0.43, B, 0, 0.1, 0), box(0.43, 0.14, 0.43, B, 0, -0.14, 0), box(0.44, 0.04, 0.44, T, 0, 0.23, 0), box(0.1, 0.03, 0.05, T, 0.2, 0.0, -0.22)); }
       else if (m === 'visor') { head.add(box(0.47, 0.47, 0.47, B, 0, 0, 0), box(0.4, 0.17, 0.03, s.v || T, 0, 0.02, 0.24), box(0.48, 0.05, 0.48, T, 0, -0.17, 0)); }
       else if (m === 'kabuto') { head.add(box(0.47, 0.18, 0.47, B, 0, 0.17, 0), box(0.49, 0.04, 0.49, T, 0, 0.09, 0), box(0.06, 0.2, 0.34, T, 0, 0.33, 0), box(0.06, 0.18, 0.06, T, -0.24, -0.02, 0.1), box(0.06, 0.18, 0.06, T, 0.24, -0.02, 0.1)); }
       else if (m === 'robot') { head.add(box(0.47, 0.47, 0.47, B, 0, 0, 0), box(0.1, 0.07, 0.03, T, -0.1, 0.06, 0.24), box(0.1, 0.07, 0.03, T, 0.1, 0.06, 0.24), box(0.22, 0.04, 0.03, T, 0, -0.1, 0.24), box(0.03, 0.18, 0.03, T, 0, 0.32, 0), box(0.08, 0.08, 0.08, T, 0, 0.44, 0)); }
@@ -688,7 +697,7 @@ function showResults(m) {
   const place = Math.max(1, all.findIndex((q) => q.id === myId) + 1);
   const res = PR.matchEnd({ won, place: tdm || zomR ? 0 : place, kills: MS.kills, deaths: MS.deaths, heads: MS.heads, mode: MODE });
   const pod = [1, 0, 2].filter((i) => all[i]).map((i) => { const q = all[i], sk = PR.SKINS[q.skin | 0] || PR.SKINS[0], col = tdm ? TEAMHEX[q.tm | 0] : '#' + ((PR.CATALOG.color[q.color | 0] || PR.CATALOG.color[0]).hex).toString(16).padStart(6, '0'), head = '#' + (sk.head || 0xd9a066).toString(16).padStart(6, '0');
-    return `<div class="pc p${i + 1} ${q.id === myId ? 'you' : ''}" style="--d:${i === 0 ? 1.1 : i === 1 ? 0.5 : 0.8}s"><div class="pav"><i class="ph" style="background:${head}"></i><i class="pbd" style="background:${col}"></i><i class="pl" style="background:${col}"></i></div><div class="pn" ${tdm ? `style="color:${TEAMHEX[q.tm | 0]}"` : ''}>${esc(q.name)}</div><div class="pkk">${q.kills} öld.</div><div class="pst"><b>${i + 1}</b></div></div>`; }).join('');
+    return `<div class="pc p${i + 1} ${q.id === myId ? 'you' : ''}" style="--d:${i === 0 ? 1.1 : i === 1 ? 0.5 : 0.8}s"><div class="pav"><i class="pph" style="background:${head}"></i><i class="pbd" style="background:${col}"></i><i class="ppl" style="background:${col}"></i></div><div class="pn" ${tdm ? `style="color:${TEAMHEX[q.tm | 0]}"` : ''}>${esc(q.name)}</div><div class="pkk">${q.kills} öld.</div><div class="pst"><b>${i + 1}</b></div></div>`; }).join('');
   const podium = all.length ? `<div class="podium">${pod}${all.length ? '<div class="pconf">' + Array.from({ length: 18 }, (_, k) => `<s style="left:${(k * 37) % 100}%;animation-delay:${(1.3 + (k % 6) * 0.15).toFixed(2)}s;background:${['#ffd23f', '#ff6b6b', '#4cd964', '#4aa8ff'][k % 4]}"></s>`).join('') + '</div>' : ''}</div>` : '';
   const rows = all.slice(0, 6).map((q, i) => `<tr class="${q.id === myId ? 'me' : ''}"><td>${i + 1}</td><td${tdm ? ` style="color:${TEAMHEX[q.tm | 0]}"` : ''}>${esc(q.name)}</td><td>${q.kills}</td><td>${q.deaths}</td></tr>`).join('');
   const lines = res.lines.map((l) => `<div><span>${esc(l.t)}</span><b>${l.px ? '+' + l.px + ' PX ' : ''}${l.gem ? '+' + l.gem + ' ◆ ' : ''}${l.xp ? '+' + l.xp + ' XP' : ''}</b></div>`).join('');
@@ -730,7 +739,10 @@ function onSnap(m) {
       else mesh.add(box(0.22, 0.28, 0.22, 0x3f5a2a, 0, 0, 0), box(0.08, 0.08, 0.08, 0xcccccc, 0, 0.17, 0));
       mesh.userData.kind = pr[1]; mesh.position.set(pr[2], pr[3], pr[4]); mesh.userData.t = new THREE.Vector3(pr[2], pr[3], pr[4]); scene.add(mesh); projMeshes.set(pr[0], mesh);
     }
-    mesh.userData.prev = mesh.position.clone(); mesh.userData.t.set(pr[2], pr[3], pr[4]);
+    { const u = mesh.userData, nt = performance.now(); mesh.userData.prev = mesh.position.clone();
+      if (u.lt) { const ds = Math.max(0.02, (nt - u.lt) / 1000); (u.v || (u.v = new THREE.Vector3())).set((pr[2] - u.lx) / ds, (pr[3] - u.ly) / ds, (pr[4] - u.lz) / ds); }
+      u.lt = nt; u.lx = pr[2]; u.ly = pr[3]; u.lz = pr[4];
+      u.t.set(pr[2], pr[3], pr[4]); if (u.v) u.t.addScaledVector(u.v, 0.04); }
   }
   for (const [id, mesh] of projMeshes) if (!ps.has(id)) { scene.remove(mesh); projMeshes.delete(id); }
   for (const k of m.ck) {
@@ -962,8 +974,9 @@ function frame(now) {
     if (a.group.position.distanceTo(camera.position) < 40) { if (a.gunCl && a.gun.children[0]) VW.flicker(a.gun.children[0], t); flickAvatar(a, t); }
   }
   for (const m of projMeshes.values()) {
-    m.position.lerp(m.userData.t, Math.min(1, dt * 20));
-    if (m.userData.kind === 0) { const d = m.userData.t.clone().sub(m.userData.prev || m.position); if (d.lengthSq() > 1e-4) m.lookAt(m.position.clone().add(d)); if (Math.random() < 0.8) burst(m.position, 0x777777, 1, 0.6, 0.18, 0.5, 0); }
+    if (m.userData.v) m.userData.t.addScaledVector(m.userData.v, dt);
+    m.position.lerp(m.userData.t, Math.min(1, dt * 14));
+    if (m.userData.kind === 0) { const d = m.userData.v || m.userData.t.clone().sub(m.userData.prev || m.position); if (d.lengthSq() > 1e-4) m.lookAt(m.position.clone().add(d)); if (Math.random() < (TOUCH ? 0.35 : 0.7)) burst(m.position, 0x777777, 1, 0.6, 0.18, 0.5, 0); }
     else m.rotation.x += dt * 9;
   }
   for (const c of chickenMeshes.values()) c.position.lerp(c.userData.t, Math.min(1, dt * 10));

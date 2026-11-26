@@ -133,3 +133,8 @@ Sürekli açık kalma için bkz. **DEPLOY.md** (Fly.io, VPS + systemd + Caddy, R
 - Kayıtta güçlü parola şartı (8+, harf+rakam, kolay parola yok), kurtarma kodu (XXXX-XXXX-XXXX, bir kez gösterilir), 'Parolamı unuttum' ile sıfırlama.
 - Ayarlar → Güvenlik: oturum listesi (cihaz at), tüm cihazlardan çıkış, kurtarma kodu üretme (eski hesaplar için).
 - iPhone: tarayıcıda tam ekran yok; giriş ekranında 'Ana Ekrana Ekle' ipucu.
+
+## Denge + yeni skinler
+- Roket/bomba atar hasarı düşürüldü (iki isabet), botlar ağır silahlarda daha yavaş ve yanlış nişan alır; mermi/roket çizimi akıcı (tahmin + gerçek süre adımı).
+- 9 yeni skin (alevli/buzlu/plazma efektli): Cehennem Lordu, Anka Kuşu, Buz Kralı, Plazma Savaşçı, Ejderha Efendisi, Alev Samuray, Elmas Kral (mağaza), Karanlık Şövalye, İnferno Ninja (ücretsiz kademe 20). Pasta Karambit (ücretsiz kademe 30) + Cehennem Alevi koleksiyonu (premium 32).
+- Mağazada eşyalar nadirliğe göre gruplu. Pass ekranı çakışan CSS düzeltildi.

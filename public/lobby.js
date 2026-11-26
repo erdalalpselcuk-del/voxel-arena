@@ -272,7 +272,15 @@
     const tabs = CATS.map(([id, nm]) => `<button class="tab ${cat === id ? 'sel' : ''}" data-cat="${id}">${nm}</button>`).join('');
     let items = PR.CATALOG[cat];
     if (locker) items = items.filter((it) => PR.owns(cat, it.id));
-    const grid = items.map((it) => `<button class="card2 ${isEquipped(cat, it.id) ? 'eq' : ''} ${selItem === it.id ? 'sel' : ''}" data-item="${it.id}"${selItem === it.id || isEquipped(cat, it.id) ? '' : rarStyle(cat, it.id)}>${itemIcon(cat, it)}<span class="nm">${esc(it.name)}</span>${rarBadge(cat, it.id)}${locker ? (isEquipped(cat, it.id) ? '<span class="pr own">Kuşanıldı</span>' : '<span class="pr no">Giy</span>') : priceTag(cat, it)}</button>`).join('');
+    const cardOf = ((it) => `<button class="card2 ${isEquipped(cat, it.id) ? 'eq' : ''} ${selItem === it.id ? 'sel' : ''}" data-item="${it.id}"${selItem === it.id || isEquipped(cat, it.id) ? '' : rarStyle(cat, it.id)}>${itemIcon(cat, it)}<span class="nm">${esc(it.name)}</span>${rarBadge(cat, it.id)}${locker ? (isEquipped(cat, it.id) ? '<span class="pr own">Kuşanıldı</span>' : '<span class="pr no">Giy</span>') : priceTag(cat, it)}</button>`);
+    const grouped = items.length > 8 && cat !== 'color';
+    let grid;
+    if (!grouped) grid = items.map(cardOf).join('');
+    else {
+      const B = [[], [], [], []]; items.forEach((it) => B[PR.rarityOf(cat, it) | 0].push(it));
+      grid = '';
+      for (let r = 3; r >= 0; r--) if (B[r].length) grid += `</div><div class="rg" style="--rc:${PR.RAR_COLORS[r]}">${r === 3 ? '\u2605 ' : ''}${PR.RAR_NAMES[r].toUpperCase()}<small>${B[r].length}</small></div><div class="grid">` + B[r].map(cardOf).join('');
+    }
     let detail = '';
     const it = selItem != null ? PR.item(cat, selItem) : null;
     if (it) {
@@ -696,7 +704,7 @@
     const into = got >= max ? per : ps.xp % per, pct = got >= max ? 100 : Math.round(into / per * 100);
     let claimable = 0; for (let i = 1; i <= got; i++) { if (!ps.claimed['f' + i]) claimable++; if (ps.premium && !ps.claimed['p' + i]) claimable++; }
     const old = $('ptrack'), keep = old ? old.scrollLeft : null;
-    const show = [20, 30, 40, 45, 50].map((t) => { const r = PR.passReward(t, true), rc = PR.RAR_COLORS[PR.rewardRarity(r)]; return `<button class="pshow ${t <= got ? 'got' : ''}" style="--rc:${rc}" data-pgoto="${t}"><div class="pic">${iconOf(r, 'xs')}</div><b>KADEME ${t}</b><span>${r.k === 'multi' ? r.list.length + ' ödül' : esc(PR.describe(r))}</span></button>`; }).join('');
+    const show = [20, 30, 38, 44, 50].map((t) => { const r = PR.passReward(t, true), rc = PR.RAR_COLORS[PR.rewardRarity(r)]; return `<button class="pshow ${t <= got ? 'got' : ''}" style="--rc:${rc}" data-pgoto="${t}"><div class="pic">${iconOf(r, 'xs')}</div><b>KADEME ${t}</b><span>${r.k === 'multi' ? r.list.length + ' ödül' : esc(PR.describe(r))}</span></button>`; }).join('');
     const hero = `<div class="ph" style="--c1:${si.col};--c2:${si.col2}"><div class="ph-l"><div class="ph-s">SEZON ${si.no}</div><div class="ph-t">${si.name}</div><div class="ph-time">&#9203; Bitmesine <b>${si.days} gün ${si.hours} sa</b></div>
         <div class="ph-btns">${ps.premium ? '<span class="ph-prem">&#9733; PREMIUM AKTİF</span>' : `<button class="pgold" data-pbuy="1">&#9733; PREMIUM'U AÇ &middot; ${PR.PREMIUM_COST} &#9670;</button>`}<button class="mini" data-pclaimall="1" ${claimable ? '' : 'disabled'}>Hepsini al${claimable ? ' (' + claimable + ')' : ''}</button><button class="mini alt" data-ptier="1" ${got >= max ? 'disabled' : ''}>Kademe atla &middot; ${PR.TIER_COST} &#9670;</button></div></div>
       <div class="ph-ring" style="--p:${pct}"><div><b>${got}</b><small>/ ${max}</small></div></div>
